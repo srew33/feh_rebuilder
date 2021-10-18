@@ -1,12 +1,12 @@
 import 'dart:io';
 
-import 'package:feh_tool/dataService.dart';
-import 'package:feh_tool/global/enum/weaponType.dart';
-import 'package:feh_tool/global/filterChain/filterChain.dart';
-import 'package:feh_tool/global/filters/filter.dart';
-import 'package:feh_tool/global/filters/skill.dart';
-import 'package:feh_tool/models/skill/skill.dart';
-import 'package:feh_tool/utils.dart';
+import 'package:feh_rebuilder/data_service.dart';
+import 'package:feh_rebuilder/global/enum/weapon_type.dart';
+import 'package:feh_rebuilder/global/filterChain/filter_chain.dart';
+import 'package:feh_rebuilder/global/filters/filter.dart';
+import 'package:feh_rebuilder/global/filters/skill.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
+import 'package:feh_rebuilder/utils.dart';
 import 'package:get/get.dart';
 
 class SkillsBrowseController extends GetxController {
@@ -39,7 +39,7 @@ class SkillsBrowseController extends GetxController {
   ///初始化后的技能列表,只读，代表符合当前类别category的所有技能，
   ///主要作用是减少修改过滤条件时需要过滤的数量
   ///其他过滤项由skills实现
-  List<Skill> _skills = [];
+  final List<Skill> _skills = [];
 
   List<Skill> get origSkills => [..._skills];
 
@@ -126,12 +126,12 @@ class SkillsBrowseController extends GetxController {
 
     // 初始化特有技能列表
     // refine_base是为了添加所有锻造的武器（ATK DEF这些锻造id_tag不一样但是refine_base都是原武器的id_tag）
-    origSkills.forEach((element) {
+    for (var element in origSkills) {
       if (_exclusiveTags.contains(element.refineBase) ||
           _exclusiveTags.contains(element.idTag)) {
         exclusiveSkills.add(element);
       }
-    });
+    }
 
     exclusiveSkills.sort((a, b) => a.sortId!.compareTo(b.sortId!) != 0
         ? a.sortId!.compareTo(b.sortId!)

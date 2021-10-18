@@ -1,6 +1,6 @@
 import 'dragonflowers.dart';
 import 'growth_rates.dart';
-import 'jsonPerson.dart';
+import 'json_person.dart';
 import 'legendary.dart';
 import 'skills.dart';
 import 'stats.dart';
@@ -101,6 +101,7 @@ class Person extends JsonPerson {
             : Stats(hp: 0, atk: 0, spd: 0, def: 0, res: 0),
       );
 
+  @override
   Map<String, dynamic> toJson() => {
         'id_tag': idTag,
         'roman': roman,

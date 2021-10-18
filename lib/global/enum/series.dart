@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 enum SeriesEnum {
   Heroes,
   Mystery_of_the_Emblem,

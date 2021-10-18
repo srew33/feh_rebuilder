@@ -1,20 +1,25 @@
 import 'dart:io';
-import 'package:feh_tool/models/personBuild/personBuild.dart';
-import 'package:feh_tool/pages/heroDetail/widgets/heroIcon.dart';
-import 'package:feh_tool/global/enum/moveType.dart';
-import 'package:feh_tool/global/enum/weaponType.dart';
-import 'package:feh_tool/global/filters/skill.dart';
-import 'package:feh_tool/models/person/person.dart';
-import 'package:feh_tool/models/skill/skill.dart';
-import 'package:feh_tool/pages/heroDetail/widgets/picker.dart';
-import 'package:feh_tool/pages/heroDetail/widgets/customBtn.dart';
-import 'package:feh_tool/pages/skillsBrowse/controller.dart';
-import 'package:feh_tool/utils.dart';
+import 'package:feh_rebuilder/models/personBuild/person_build.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/hero_icon.dart';
+import 'package:feh_rebuilder/global/enum/move_type.dart';
+import 'package:feh_rebuilder/global/enum/weapon_type.dart';
+import 'package:feh_rebuilder/global/filters/skill.dart';
+import 'package:feh_rebuilder/models/person/person.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/picker.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/custom_btn.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/share_widget.dart';
+import 'package:feh_rebuilder/pages/home/subview/favorite_controller.dart';
+import 'package:feh_rebuilder/pages/skillsBrowse/controller.dart';
+import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'controller.dart';
 
 class HeroDetail extends GetView<HeroDetailController> {
+  const HeroDetail({Key? key}) : super(key: key);
+
   Future<List<int?>?> _showPicker(
     BuildContext context, {
     Widget? title,
@@ -35,7 +40,7 @@ class HeroDetail extends GetView<HeroDetailController> {
   Widget _buildAvatar(String path, double height) {
     return Image.file(
       File("${controller.data.appPath.path}/$path"),
-      errorBuilder: (context, obj, s) => Icon(Icons.error),
+      errorBuilder: (context, obj, s) => const Icon(Icons.error),
       height: height,
     );
   }
@@ -52,7 +57,6 @@ class HeroDetail extends GetView<HeroDetailController> {
   }
 
   List<Widget> _buildActions() {
-// controller.build.equipSkills
     return [
       controller.build.custom
           ? IconButton(
@@ -63,42 +67,48 @@ class HeroDetail extends GetView<HeroDetailController> {
                   Get.back(result: newBuild);
                 }
               },
-              icon: Icon(Icons.save),
+              icon: const Icon(Icons.save),
             )
           : IconButton(
               onPressed: () {
                 if (controller.addToFavorite() != null) {
-                  ScaffoldMessenger.of(Get.context!).showSnackBar(SnackBar(
-                    content: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [Text("成功")],
-                    ),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10))),
-                    duration: Duration(seconds: 1),
-                  ));
-                  // Get.snackbar("", "添加成功",
-                  //     snackPosition: SnackPosition.BOTTOM);
+                  // 收藏页面没有用obx进行响应式处理，所以这里要手动刷新
+                  Get.find<FavoritePageController>().refreshData();
+                  Utils.showToast("成功");
                 }
               },
-              icon: Icon(
+              icon: const Icon(
                 Icons.favorite_border,
               ),
-            )
+            ),
+      // 导出按钮
+      IconButton(
+          onPressed: () async {
+            showDialog(
+              context: Get.context!,
+              builder: (context) => Dialog(
+                child: ShareWidget(
+                  build: controller.currentBuild,
+                  equipedStats: controller.equipStats,
+                ),
+              ),
+            );
+          },
+          icon: const Icon(Icons.share)),
     ];
   }
 
   List<Widget> _buildStats() {
     return [
       ListTile(
-        title: Text("数值"),
+        title: const Text("数值"),
         tileColor: Colors.grey.shade200,
       ),
       ListTile(
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("召唤师的羁绊"),
+            const Text("召唤师的羁绊"),
             Switch(
               value: controller.isSummonerSupport,
               onChanged: (bool newVal) =>
@@ -111,7 +121,7 @@ class HeroDetail extends GetView<HeroDetailController> {
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("神装英雄"),
+            const Text("神装英雄"),
             Switch(
               value: controller.isResplendent,
               // onChanged: (bool newVal) => _.resplendent = newVal,
@@ -130,10 +140,11 @@ class HeroDetail extends GetView<HeroDetailController> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text.rich(TextSpan(children: [
-                  TextSpan(text: "竞技场", style: TextStyle(color: Colors.black)),
+                  const TextSpan(
+                      text: "竞技场", style: TextStyle(color: Colors.black)),
                   TextSpan(
                       text: controller.bst.toString(),
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold, color: Colors.black)),
                 ])),
                 FittedBox(
@@ -157,7 +168,7 @@ class HeroDetail extends GetView<HeroDetailController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("基础数值"),
+                const Text("基础数值"),
                 FittedBox(
                   child: Row(
                     children: [
@@ -176,7 +187,7 @@ class HeroDetail extends GetView<HeroDetailController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("装备数值"),
+                const Text("装备数值"),
                 FittedBox(
                   child: Row(
                     children: [
@@ -200,21 +211,24 @@ class HeroDetail extends GetView<HeroDetailController> {
 
   List<Widget> _buildUniqueEffect() {
     List<Widget> widgetList = [];
-
-    if (controller.hero.legendary != null) {
-      widgetList.add(ListTile(
-        title: Text("常驻效果"),
-        tileColor: Colors.grey.shade200,
-      ));
+    // kind:1神阶、传承 2比翼 3双界 4开花
+    if (controller.hero.legendary?.kind != 4 &&
+        controller.hero.legendary != null) {
+      widgetList.add(
+        ListTile(
+          title: const Text("常驻效果"),
+          tileColor: Colors.grey.shade200,
+        ),
+      );
 
       widgetList.add(ListTile(
           title:
               Text("MPID_LEGEND_${controller.hero.idTag!.split("_")[1]}".tr)));
 
       // 技能
-      if (controller.hero.legendary!.duoSkillId != null) {
+      if (controller.hero.legendary?.duoSkillId != null) {
         widgetList.add(ExpansionTile(
-          title: Text("特殊技能效果"),
+          title: const Text("特殊技能效果"),
           children: [
             ListTile(
               title: Text(
@@ -233,7 +247,7 @@ class HeroDetail extends GetView<HeroDetailController> {
   Widget _buildBaseInfo() {
     return Row(
       children: [
-        Padding(padding: EdgeInsets.only(left: 10)),
+        const Padding(padding: EdgeInsets.only(left: 10)),
         // 头像
         IndexedStack(
           index: controller.isResplendent ? 0 : 1,
@@ -247,21 +261,21 @@ class HeroDetail extends GetView<HeroDetailController> {
                     "assets/faces/${controller.hero.faceName}.webp", 50)),
           ],
         ),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         // 武器和移动类型
         Column(
           children: [
             _buildAvatar("assets/move/${controller.hero.moveType}.webp", 25),
-            SizedBox(
+            const SizedBox(
               height: 5,
             ),
             _buildAvatar(
                 "assets/weapon/${controller.hero.weaponType}.webp", 25),
           ],
         ),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         // 突破
@@ -272,10 +286,11 @@ class HeroDetail extends GetView<HeroDetailController> {
           height: 20,
           titleSize: 10,
           onPressed: () async {
-            List<int?>? _merge =
-                await _showPicker(Get.context!, title: Text("突破极限"), body: [
-              {"minValue": 0, "maxValue": 10, "value": controller.merged},
-            ]);
+            List<int?>? _merge = await _showPicker(Get.context!,
+                title: const Text("突破极限"),
+                body: [
+                  {"minValue": 0, "maxValue": 10, "value": controller.merged},
+                ]);
             if (_merge != null) {
               // _showPicker相对于CircleBtn是独立的，因此无法直接获取到结果
               // 如果不在这里使用currentState需要在CircleBtn里调用_showPicker，
@@ -286,7 +301,7 @@ class HeroDetail extends GetView<HeroDetailController> {
             }
           },
         ),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         // 性格
@@ -295,7 +310,7 @@ class HeroDetail extends GetView<HeroDetailController> {
           onPressed: () async {
             // picker里面已经设置结果不可重复，这里不需判断
             List<int?>? _result = await _showPicker(Get.context!,
-                title: Text("优势/劣势"),
+                title: const Text("优势/劣势"),
                 nullIndex: 0,
                 body: [
                   {
@@ -345,7 +360,7 @@ class HeroDetail extends GetView<HeroDetailController> {
               "+${controller.advantage ?? "    "} -${controller.disadvantage ?? ""}",
         ),
 
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         // 神龙之花
@@ -356,14 +371,15 @@ class HeroDetail extends GetView<HeroDetailController> {
           height: 20,
           titleSize: 10,
           onPressed: () async {
-            List<int?>? _dragonFlower =
-                await _showPicker(Get.context!, title: Text("神龙之花"), body: [
-              {
-                "minValue": 0,
-                "maxValue": controller.hero.dragonflowers!.maxCount!,
-                "value": controller.dragonFlower
-              },
-            ]);
+            List<int?>? _dragonFlower = await _showPicker(Get.context!,
+                title: const Text("神龙之花"),
+                body: [
+                  {
+                    "minValue": 0,
+                    "maxValue": controller.hero.dragonflowers!.maxCount!,
+                    "value": controller.dragonFlower
+                  },
+                ]);
             if (_dragonFlower != null) {
               controller.dragonBtnKey.currentState!
                   .setNewDisplay("+${_dragonFlower[0].toString()}");
@@ -380,7 +396,7 @@ class HeroDetail extends GetView<HeroDetailController> {
     return controller.origWeaponRefine.isNotEmpty
         ? [
             ListTile(
-              title: Text("武器炼成"),
+              title: const Text("武器炼成"),
               tileColor: Colors.grey.shade200,
             ),
             for (Map<Skill, Skill> s in controller.origWeaponRefine)
@@ -389,17 +405,17 @@ class HeroDetail extends GetView<HeroDetailController> {
                     title: Text.rich(TextSpan(children: [
                   TextSpan(
                     text: (s.keys.first.descId!).tr.replaceAll("\n", ""),
-                    style: TextStyle(),
+                    style: const TextStyle(),
                   ),
-                  TextSpan(text: "\n"),
+                  const TextSpan(text: "\n"),
                   TextSpan(
                     text: (s.values.first.descId!).tr.replaceAll("\n", ""),
-                    style: TextStyle(color: Colors.green),
+                    style: const TextStyle(color: Colors.green),
                   ),
                 ])))
               ]),
           ]
-        : [SizedBox.shrink()];
+        : [const SizedBox.shrink()];
   }
 
   Widget _buildIcon(int index, Skill? s) {
@@ -417,7 +433,7 @@ class HeroDetail extends GetView<HeroDetailController> {
         if (s == null) {
           return Image.asset(
             "assets/static/3.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -427,7 +443,7 @@ class HeroDetail extends GetView<HeroDetailController> {
         if (s == null) {
           return Image.asset(
             "assets/static/4.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -437,7 +453,7 @@ class HeroDetail extends GetView<HeroDetailController> {
         if (s == null) {
           return Image.asset(
             "assets/static/5.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -447,7 +463,7 @@ class HeroDetail extends GetView<HeroDetailController> {
         if (s == null) {
           return Image.asset(
             "assets/static/6.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -459,7 +475,7 @@ class HeroDetail extends GetView<HeroDetailController> {
             : _buildAvatar("assets/blessing/${s.iconId}.webp", 30);
 
       default:
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
     }
   }
 
@@ -469,21 +485,23 @@ class HeroDetail extends GetView<HeroDetailController> {
       title: Row(
         children: [
           Text.rich(TextSpan(children: [
-            TextSpan(text: "竞技场分数 ", style: TextStyle(color: Colors.black)),
+            const TextSpan(
+                text: "竞技场分数 ", style: TextStyle(color: Colors.black)),
             TextSpan(
                 text: controller.arenaScore.toString(),
-                style: TextStyle(
+                style: const TextStyle(
                     fontWeight: FontWeight.bold, color: Colors.black)),
           ])),
-          Spacer(),
+          const Spacer(),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text.rich(
               TextSpan(children: <InlineSpan>[
-                TextSpan(text: "总SP ", style: TextStyle(color: Colors.black)),
+                const TextSpan(
+                    text: "总SP ", style: TextStyle(color: Colors.black)),
                 TextSpan(
                     text: controller.allSpCost.toString(),
-                    style: TextStyle(
+                    style: const TextStyle(
                         fontWeight: FontWeight.bold, color: Colors.black)),
               ]),
             ),
@@ -496,7 +514,7 @@ class HeroDetail extends GetView<HeroDetailController> {
   List<Widget> _buildSkill() {
     return [
       ListTile(
-        title: Text("技能配置"),
+        title: const Text("技能配置"),
         tileColor: Colors.grey.shade200,
       ),
       for (int index = 0; index < (controller.hasLegendEffect ? 7 : 8); index++)
@@ -510,12 +528,12 @@ class HeroDetail extends GetView<HeroDetailController> {
                     Text("${(controller.heroSkills[index]!.nameId!).tr} ${controller.heroSkills[index]!.might! > 0 && controller.heroSkills[index]!.category == 0 ? [
                         controller.heroSkills[index]!.might
                       ] : ""}${controller.heroSkills[index]!.cooldownCount! > 0 && controller.heroSkills[index]!.category! == 2 ? [controller.heroSkills[index]!.cooldownCount] : ""}"),
-                    Spacer(),
+                    const Spacer(),
                     IconButton(
                       onPressed: () {
                         controller.delSkill(controller.heroSkills[index]!);
                       },
-                      icon: Icon(Icons.delete),
+                      icon: const Icon(Icons.delete),
                       iconSize: 15,
                     )
                   ],
@@ -541,10 +559,10 @@ class HeroDetail extends GetView<HeroDetailController> {
                                       .tr)
                                   .replaceAll("\n", "")
                                   .replaceAll(r"$a", ""),
-                          style: TextStyle(color: Colors.green),
+                          style: const TextStyle(color: Colors.green),
                         ),
                       if (controller.heroSkills[index]!.exclusive!)
-                        TextSpan(
+                        const TextSpan(
                           text: "\n无法继承",
                           style: TextStyle(color: Colors.red),
                         ),

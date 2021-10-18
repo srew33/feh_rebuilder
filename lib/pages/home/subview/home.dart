@@ -1,92 +1,139 @@
 import 'dart:io';
 
-import 'package:feh_tool/global/enum/sortKey.dart';
-import 'package:feh_tool/models/person/person.dart';
-import 'package:feh_tool/models/personBuild/personBuild.dart';
-
-import 'package:feh_tool/pages/home/widgets/customListView.dart';
-import 'package:feh_tool/utils.dart';
+import 'package:feh_rebuilder/global/enum/sort_key.dart';
+import 'package:feh_rebuilder/models/person/person.dart';
+import 'package:feh_rebuilder/models/personBuild/person_build.dart';
+import 'package:feh_rebuilder/pages/home/widgets/jumpable_listview.dart';
+import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:path/path.dart' as p;
-import 'homePageController.dart';
+import 'home_page_controller.dart';
 
 class HomePage extends GetView<HomePageController> {
+  const HomePage({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    ItemPositionsListener.create();
-    if (controller.grouped.length > 0) {
-      return CustomListView<Person>(
-        key: controller.listKey,
-        data: controller.grouped,
-        elementBuilder: (context, person) => ListTile(
-          leading: ClipOval(
-            child: Image.file(
-              File(
-                  "${controller.data.appPath.path}/assets/faces/${person.faceName!}.webp"),
-              errorBuilder: (context, obj, s) => Icon(Icons.error),
-            ),
-          ),
-          title: Text(("M${person.idTag!}").tr
-              // + "  ${person.roman}"
-              ),
-          subtitle: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                child: Row(
-                  children: [
-                    Image.file(
-                      File(p.join(controller.data.appPath.path, "assets",
-                          "move", "${person.moveType}.webp")),
-                      height: 20,
-                      filterQuality: FilterQuality.none,
-                      errorBuilder: (context, obj, s) => Icon(Icons.error),
-                    ),
-                    Image.file(
-                      File(p.join(controller.data.appPath.path, "assets",
-                          "weapon", "${person.weaponType}.webp")),
-                      filterQuality: FilterQuality.none,
-                      height: 23,
-                      errorBuilder: (context, obj, s) => Icon(Icons.error),
-                    )
-                    // Text(person.moveType.toString()),
-                    // Text(person.weaponType.toString()),
-                  ],
-                ),
-              ),
-              Text(person.defaultStats!.hp.toString()),
-              Text(person.defaultStats!.atk.toString()),
-              Text(person.defaultStats!.spd.toString()),
-              Text(person.defaultStats!.def.toString()),
-              Text(person.defaultStats!.res.toString()),
-              Text(
-                  "[${controller.currentSortKey == SortKey.bst ? person.bst.toString() : person.defaultStats!.sum.toString()}]"),
-              Padding(padding: EdgeInsets.only(right: 15))
-            ],
-          ),
+    if (controller.grouped.isNotEmpty) {
+      return JumpableListView<Person>(
+        groupData: controller.grouped,
+        itemBuilder: (context, person) => MyTile(
+          path: controller.data.appPath.path,
+          person: person,
+          sum: controller.currentSortKey == SortKey.bst
+              ? person.bst.toString()
+              : person.defaultStats!.sum.toString(),
+        ),
+        scrollController: controller.sc,
+        itemExtent: 80,
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+}
+
+class MyTile extends StatelessWidget {
+  const MyTile(
+      {Key? key, required this.path, required this.person, required this.sum})
+      : super(key: key);
+  final String path;
+  final Person person;
+  final String sum;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 80,
+      color: Colors.transparent,
+      child: Card(
+        elevation: 0,
+        child: InkWell(
           onTap: () {
             Utils.debug(person.idTag!);
             Get.toNamed(
               "/heroDetail",
-              arguments: PersonBuild(idTag: person.idTag!, equipSkills: []),
+              arguments: PersonBuild(personTag: person.idTag!, equipSkills: []),
             );
           },
-        ),
-        headerBuilder: (context, data) => Container(
-          color: Colors.grey.shade300,
-          child: Padding(
-            padding: EdgeInsets.only(left: 30),
-            child: Text(
-              data,
-              style: Get.textTheme.headline5,
-            ),
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: ClipOval(
+                  child: Image.file(
+                    File(p.join(
+                        path, "assets", "faces", "${person.faceName!}.webp")),
+                    height: 60,
+                    filterQuality: FilterQuality.none,
+                    errorBuilder: (context, obj, s) => const Icon(Icons.error),
+                  ),
+                ),
+              ),
+              Expanded(
+                  child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Text(("M${person.idTag!}").tr),
+                  Row(
+                    children: [
+                      MyTile1(path: path, person: person),
+                      const Spacer(),
+                      Text(person.defaultStats!.hp.toString()),
+                      const Spacer(),
+                      Text(person.defaultStats!.atk.toString()),
+                      const Spacer(),
+                      Text(person.defaultStats!.spd.toString()),
+                      const Spacer(),
+                      Text(person.defaultStats!.def.toString()),
+                      const Spacer(),
+                      Text(person.defaultStats!.res.toString()),
+                      const Spacer(),
+                      Text("[${sum.toString()}]"),
+                      const SizedBox(
+                        width: 40,
+                      )
+                    ],
+                  ),
+                ],
+              ))
+            ],
           ),
         ),
-      );
-    } else {
-      return SizedBox.shrink();
-    }
+      ),
+    );
+  }
+}
+
+class MyTile1 extends StatelessWidget {
+  const MyTile1({Key? key, required this.path, required this.person})
+      : super(key: key);
+  final String path;
+  final Person person;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 45,
+      child: Row(
+        children: [
+          Image(
+            height: 20,
+            image: FileImage(
+              File(p.join(path, "assets", "move", "${person.moveType}.webp")),
+            ),
+          ),
+          Image(
+            height: 23,
+            image: FileImage(
+              File(p.join(
+                  path, "assets", "weapon", "${person.weaponType}.webp")),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

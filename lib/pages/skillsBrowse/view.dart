@@ -1,16 +1,16 @@
 import 'dart:io';
 
-import 'package:feh_tool/global/enum/weaponType.dart';
-import 'package:feh_tool/global/filters/skill.dart';
-import 'package:feh_tool/models/person/person.dart';
-import 'package:feh_tool/models/skill/skill.dart';
-import 'package:feh_tool/pages/heroDetail/widgets/heroIcon.dart';
-import 'package:feh_tool/pages/skillsBrowse/controller.dart';
+import 'package:feh_rebuilder/global/enum/weapon_type.dart';
+import 'package:feh_rebuilder/global/filters/skill.dart';
+import 'package:feh_rebuilder/models/person/person.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/hero_icon.dart';
+import 'package:feh_rebuilder/pages/skillsBrowse/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class SkillsBrowse extends GetView<SkillsBrowseController> {
-  SkillsBrowse();
+  const SkillsBrowse({Key? key}) : super(key: key);
 
   Widget _buildIcon(Skill? s) {
     switch (controller.category) {
@@ -27,7 +27,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
         if (s == null) {
           return Image.asset(
             "assets/static/3.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -37,7 +37,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
         if (s == null) {
           return Image.asset(
             "assets/static/4.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -47,7 +47,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
         if (s == null) {
           return Image.asset(
             "assets/static/5.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -57,7 +57,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
         if (s == null) {
           return Image.asset(
             "assets/static/6.png",
-            errorBuilder: (context, obj, s) => Icon(Icons.error),
+            errorBuilder: (context, obj, s) => const Icon(Icons.error),
             height: 25,
           );
         }
@@ -69,14 +69,14 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
             : _buildAvatar("assets/blessing/${s.iconId}.webp", 30);
 
       default:
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
     }
   }
 
   Widget _buildAvatar(String path, double height) {
     return Image.file(
       File("${controller.currentPath.path}/$path"),
-      errorBuilder: (context, obj, s) => Icon(Icons.error),
+      errorBuilder: (context, obj, s) => const Icon(Icons.error),
       height: height,
     );
   }
@@ -95,36 +95,36 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
       case 3:
         return Image.asset(
           "assets/static/3.png",
-          errorBuilder: (context, obj, s) => Icon(Icons.error),
+          errorBuilder: (context, obj, s) => const Icon(Icons.error),
           height: 25,
         );
 
       case 4:
         return Image.asset(
           "assets/static/4.png",
-          errorBuilder: (context, obj, s) => Icon(Icons.error),
+          errorBuilder: (context, obj, s) => const Icon(Icons.error),
           height: 25,
         );
 
       case 5:
         return Image.asset(
           "assets/static/5.png",
-          errorBuilder: (context, obj, s) => Icon(Icons.error),
+          errorBuilder: (context, obj, s) => const Icon(Icons.error),
           height: 25,
         );
 
       case 6:
         return Image.asset(
           "assets/static/6.png",
-          errorBuilder: (context, obj, s) => Icon(Icons.error),
+          errorBuilder: (context, obj, s) => const Icon(Icons.error),
           height: 25,
         );
 
       case 7:
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
 
       default:
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
     }
   }
 
@@ -154,7 +154,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
                       controller.showWeaponType.value == weapon.groupIndex))
           ],
         ),
-        SizedBox(
+        const SizedBox(
           height: 5,
         ),
         Row(
@@ -185,7 +185,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
         ),
       ];
     }
-    return [SizedBox.shrink()];
+    return [const SizedBox.shrink()];
   }
 
   Widget _buildCategoryZone() {
@@ -203,7 +203,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
                   ),
                   backgroundColor: Colors.transparent,
                   selectedColor: Colors.blue.shade200,
-                  shape: RoundedRectangleBorder(
+                  shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.all(Radius.circular(5))),
                   onSelected: (bool newState) {
                     if (newState) {
@@ -216,12 +216,12 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
         ],
       );
     }
-    return SizedBox.shrink();
+    return const SizedBox.shrink();
   }
 
   List<Widget> _buildFilterZone() {
     return [
-      SizedBox(
+      const SizedBox(
         height: 5,
       ),
       for (Widget w in _buildWeaponZone()) w,
@@ -230,8 +230,8 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
       if (controller.category == 0 && !controller.selectMode)
         Row(
           children: [
-            Text("只显示具有特效的锻造"),
-            Spacer(),
+            const Text("只显示具有特效的锻造"),
+            const Spacer(),
             Obx(() => Switch(
                 value: controller.onlyRefinedSkill.value,
                 onChanged: (bool val) {
@@ -248,8 +248,8 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
       if (!controller.selectMode)
         Row(
           children: [
-            Text("显示专属技能"),
-            Spacer(),
+            const Text("显示专属技能"),
+            const Spacer(),
             Obx(() => Switch(
                 value: controller.isExclusive.value,
                 onChanged: (bool val) {
@@ -261,8 +261,8 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
         ),
       Row(
         children: [
-          Text("只显示常用技能"),
-          Spacer(),
+          const Text("只显示常用技能"),
+          const Spacer(),
           Obx(() => Switch(
               value: controller.onlyRegularSkill.value,
               onChanged: (bool val) {
@@ -297,10 +297,12 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
                         title: Row(
                           children: [
                             _buildIcon(s),
-                            Text(s.idTag!.split("_").length == 3
-                                ? "${(s.nameId!).tr}_${s.idTag!.split("_")[2]}"
-                                : "${(s.nameId!).tr}"),
-                            Spacer(),
+                            Text(
+                              s.idTag!.split("_").length == 3
+                                  ? "${(s.nameId!).tr}_${s.idTag!.split("_")[2]}"
+                                  : (s.nameId!).tr,
+                            ),
+                            const Spacer(),
                             // Text(s.idNum!.toString()),
                             // Text("  "),
                             // Text(s.sortId!.toString()),
@@ -309,7 +311,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
                                   onPressed: () {
                                     Get.back(result: s);
                                   },
-                                  icon: Icon(Icons.done))
+                                  icon: const Icon(Icons.done))
                           ],
                         ),
                         children: [
@@ -329,10 +331,10 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
                                               .tr)
                                           .replaceAll("\n", "")
                                           .replaceAll(r"$a", ""),
-                                  style: TextStyle(color: Colors.green),
+                                  style: const TextStyle(color: Colors.green),
                                 ),
                               if (s.exclusive!)
-                                TextSpan(
+                                const TextSpan(
                                   text: "\n无法继承",
                                   style: TextStyle(color: Colors.red),
                                 ),

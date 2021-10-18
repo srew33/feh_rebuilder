@@ -1,12 +1,11 @@
 import 'dart:io';
-import 'package:feh_tool/dataService.dart';
-import 'package:feh_tool/pages/heroDetail/bindings.dart';
-import 'package:feh_tool/pages/home/bindings.dart';
-import 'package:feh_tool/pages/home/subview/openSource.dart';
-import 'package:feh_tool/pages/home/view.dart';
-import 'package:feh_tool/pages/skillsBrowse/bindings.dart';
-import 'package:feh_tool/translate.dart';
-import 'package:feh_tool/utils.dart';
+import 'package:feh_rebuilder/data_service.dart';
+import 'package:feh_rebuilder/pages/heroDetail/bindings.dart';
+import 'package:feh_rebuilder/pages/home/bindings.dart';
+import 'package:feh_rebuilder/pages/home/view.dart';
+import 'package:feh_rebuilder/pages/skillsBrowse/bindings.dart';
+import 'package:feh_rebuilder/translate.dart';
+import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -17,9 +16,10 @@ import 'package:path_provider/path_provider.dart';
 import 'pages/heroDetail/view.dart';
 import 'pages/skillsBrowse/view.dart';
 import 'package:path/path.dart' as p;
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
-  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.blue, // status bar color
   ));
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +38,7 @@ void main() async {
 
   await initServices(appDir, tempDir);
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 Future<void> initServices(Directory appPath, Directory tempDir) async {
@@ -52,26 +52,18 @@ Future<void> initServices(Directory appPath, Directory tempDir) async {
 List<GetPage> pages = [
   GetPage(
     name: '/home',
-    page: () => Home(),
+    page: () => const Home(),
     binding: HomeBinding(),
   ),
   GetPage(
     name: "/heroDetail",
-    page: () => HeroDetail(),
+    page: () => const HeroDetail(),
     binding: HeroDetailBinding(),
   ),
   GetPage(
     name: "/skillsBrowse",
-    page: () => SkillsBrowse(),
+    page: () => const SkillsBrowse(),
     binding: SkillsBrowseBindings(),
-  ),
-  GetPage(
-    name: "/openSource",
-    page: () => OpenSource(),
-  ),
-  GetPage(
-    name: "/openSourceDetail",
-    page: () => OpenSourceDetail(),
   ),
 ];
 
@@ -87,6 +79,8 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -104,7 +98,38 @@ class MyApp extends StatelessWidget {
       translations: Translation(),
       locale:
           dataService.languageDict[dataService.customBox.read("dataLanguage")],
-      fallbackLocale: Locale('en', 'US'),
+      fallbackLocale: const Locale("zh", "CN"),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      // 现在不需要支持其他语言的界面
+      supportedLocales: const <Locale>[
+        Locale("zh", "CN"),
+        // Locale('en', 'US'),
+        // Locale("ja", "JP"),
+      ],
+      onReady: () async {
+        ///缓存头像和常用的图片，
+        await for (FileSystemEntity img
+            in Directory(p.join(dataService.appPath.path, "assets", "faces"))
+                .list()) {
+          await precacheImage(FileImage(File(img.path)), context);
+        }
+        await for (FileSystemEntity img
+            in Directory(p.join(dataService.appPath.path, "assets", "move"))
+                .list()) {
+          await precacheImage(FileImage(File(img.path)), context,
+              size: const Size(20, 20));
+        }
+        await for (FileSystemEntity img
+            in Directory(p.join(dataService.appPath.path, "assets", "weapon"))
+                .list()) {
+          await precacheImage(FileImage(File(img.path)), context,
+              size: const Size(23, 23));
+        }
+      },
     );
   }
 }

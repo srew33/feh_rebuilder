@@ -46,8 +46,12 @@ app.*.map.json
 /android/app/release
 
 assets/*
-!assets/assets.zip
 !assets/static/
+!assets/assets.zip
+# !assets/db
+# !assets/update.pub
+
+
 
 windows/
 

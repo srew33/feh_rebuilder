@@ -1,4 +1,4 @@
-import 'package:feh_tool/dataService.dart';
+import 'package:feh_rebuilder/data_service.dart';
 import 'package:get/get.dart';
 
 import 'package:get_storage/get_storage.dart';
@@ -15,3 +15,13 @@ class Translation extends Translations {
           (e as Map<String, dynamic>)
               .map((key, value) => MapEntry(key, value as String))));
 }
+
+// 如果需要将软件locale和数据的翻译分开，可以用下面的方式，然后修改.tr为.dTrans
+// extension DataTranslation on String {
+//   static final Map<String, Map<String, String>> _trans = Map.fromIterables(
+//       Get.find<DataService>().transBox.getKeys() as Iterable<String>,
+//       (Get.find<DataService>().transBox.getValues() as Iterable<dynamic>).map(
+//           (e) => (e as Map<String, dynamic>)
+//               .map((key, value) => MapEntry(key, value as String))));
+//   String get dTrans => _trans[LOCALEKEY]![this] ?? "";
+// }

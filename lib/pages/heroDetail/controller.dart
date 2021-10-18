@@ -1,11 +1,11 @@
-import 'package:feh_tool/dataService.dart';
-import 'package:feh_tool/models/person/skills.dart';
-import 'package:feh_tool/models/personBuild/personBuild.dart';
-import 'package:feh_tool/models/person/person.dart';
-import 'package:feh_tool/models/person/stats.dart';
-import 'package:feh_tool/models/skill/skill.dart';
-import 'package:feh_tool/pages/heroDetail/widgets/customBtn.dart';
-import 'package:feh_tool/utils.dart';
+import 'package:feh_rebuilder/data_service.dart';
+import 'package:feh_rebuilder/models/person/skills.dart';
+import 'package:feh_rebuilder/models/personBuild/person_build.dart';
+import 'package:feh_rebuilder/models/person/person.dart';
+import 'package:feh_rebuilder/models/person/stats.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/custom_btn.dart';
+import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:math' as m;
@@ -95,24 +95,22 @@ class HeroDetailController extends GetxController {
         Utils.calcStats(hero, 1, 40, rarity, advantage, disadvantage));
 
     // 从传承效果、A技能、和白值中计算最高的一个值，突破大于0时白值+3
-    // 死斗的skillParams!.hp其他技能也有但一般小于100，所以这里暂时忽略
-    // 计算0破性格时已经计算过性格对白值的影响(一般会+-3，特殊+-4，因此总白值相对中性
+    // 计算0破性格时已经计算过性格对白值的影响(一般会+-3，优劣性格会+-4，因此总白值相对中性
     // 已经有了-1到+1的补充)，这里不需要计算
     return [
       hero.legendary == null ? 0 : hero.legendary!.bst!,
       heroSkills[3] == null
           ? 0
-          // 如果是传承或神阶则使用A技能atk的值（仅限死斗4）
-          : hero.legendary?.kind == 1
-              ? heroSkills[3]!.skillParams!.atk != 0
-                  ? heroSkills[3]!.skillParams!.atk
-                  // 部分技能如守備魔防の防城戦4的HP是453会影响判断
-                  // 也可以通过列表来过滤更直接，考虑到这系列的技能可能会继续出，这里还是通过比较值过滤
-                  : heroSkills[3]!.skillParams!.hp >= 220
-                      ? 0
+          // 死斗系技能的timingId等于18
+          : heroSkills[3]!.timingId != 18
+              ? 0
+              // 是否传承或神阶英雄，如果是传承或神阶则使用A技能atk的值（仅限死斗4），
+              // 否则使用HP的值
+              : hero.legendary?.kind == 1
+                  // 死斗3的ATK是0，只有死斗4的ATK > 0
+                  ? heroSkills[3]!.skillParams!.atk != 0
+                      ? heroSkills[3]!.skillParams!.atk
                       : heroSkills[3]!.skillParams!.hp
-              : heroSkills[3]!.skillParams!.hp >= 220
-                  ? 0
                   : heroSkills[3]!.skillParams!.hp,
       merged > 0 ? stats.sum + 3 : stats.sum
     ].reduce((value, element) => m.max(value, element));
@@ -128,7 +126,6 @@ class HeroDetailController extends GetxController {
                 .floor() +
             merged * 2 +
             (allSpCost / 100).floor() +
-            // ((stats.hp + stats.atk + stats.spd + stats.def + stats.res) / 5)
             (bst / 5).floor() +
             (heroSkills[7] == null ? 0 : 4) +
             150) *
@@ -160,7 +157,7 @@ class HeroDetailController extends GetxController {
     if (s1 == null && s2 == null) {
       return null;
     } else if (s1 == null || s2 == null) {
-      return s1 != null ? s1 : s2;
+      return s1 ?? s2;
     } else {
       return s1.prerequisites.contains(s2.idTag) ? s1 : s2;
     }
@@ -243,11 +240,11 @@ class HeroDetailController extends GetxController {
     }
 
     if (build.custom) {
-      build.equipSkills.forEach((element) {
+      for (var element in build.equipSkills) {
         element != null
             ? origHeroSkills.add(Skill.fromJson(data.skillBox.read(element)))
             : origHeroSkills.add(null);
-      });
+      }
     } else {
       origHeroSkills = skills;
     }
@@ -316,9 +313,9 @@ class HeroDetailController extends GetxController {
   ///添加进收藏 [timeStamp] 是毫秒时间戳，为0代表新增，否则会检索指定的数据修改
   PersonBuild? addToFavorite([int timeStamp = 0]) {
     try {
-      PersonBuild _ = PersonBuild(idTag: hero.idTag!, equipSkills: [
-        for (Skill? skill in heroSkills) skill != null ? skill.idTag : null
-      ])
+      PersonBuild _ = PersonBuild(
+          personTag: hero.idTag!,
+          equipSkills: [for (Skill? skill in heroSkills) skill?.idTag])
         ..merged = merged
         ..advantage = advantage
         ..disAdvantage = disadvantage
@@ -350,11 +347,25 @@ class HeroDetailController extends GetxController {
     }
   }
 
+  PersonBuild get currentBuild {
+    return PersonBuild(
+        personTag: hero.idTag!,
+        equipSkills: [for (Skill? skill in heroSkills) skill?.idTag])
+      ..merged = merged
+      ..advantage = advantage
+      ..disAdvantage = disadvantage
+      ..rarity = rarity
+      ..dragonflowers = dragonFlower
+      ..summonerSupport = isSummonerSupport
+      ..arenaScore = arenaScore
+      ..resplendent = isResplendent;
+  }
+
   HeroDetailController();
 
   @override
   void onInit() {
-    hero = Person.fromJson(data.personBox.read(build.idTag));
+    hero = Person.fromJson(data.personBox.read(build.personTag));
 
     if (build.custom) {
       advantage = build.advantage;
@@ -380,7 +391,8 @@ class HeroDetailController extends GetxController {
             merged,
             dragonFlower,
             isResplendent,
-            isSummonerSupport))
+            isSummonerSupport,
+          ))
         : Stats.fromJson(Utils.calcStats(hero, 1, 40, 5));
 
     if (heroSkills.isNotEmpty) {

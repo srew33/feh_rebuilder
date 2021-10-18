@@ -1,5 +1,5 @@
-import 'package:feh_tool/models/person/stats.dart';
-import 'package:feh_tool/models/skill/jsonSkill.dart';
+import 'package:feh_rebuilder/models/person/stats.dart';
+import 'package:feh_rebuilder/models/skill/json_skill.dart';
 
 class Skill extends JsonSkill {
   bool isSkillAccessory;
@@ -255,6 +255,7 @@ class Skill extends JsonSkill {
         refineList: (json['refineList'] as List<dynamic>?)?.cast<String>(),
       );
 
+  @override
   Map<String, dynamic> toJson() => {
         'id_tag': idTag,
         'refine_base': refineBase,

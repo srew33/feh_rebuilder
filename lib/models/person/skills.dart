@@ -1,11 +1,11 @@
-import 'package:feh_tool/dataService.dart';
-import 'package:feh_tool/models/skill/skill.dart';
-import 'package:feh_tool/utils.dart';
+import 'package:feh_rebuilder/data_service.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
+import 'package:feh_rebuilder/utils.dart';
 import 'package:get/get.dart';
 
 class Skills {
   late List<List<String?>> skills;
-  static const List<String?> skillsList = const [
+  static const List<String?> skillsList = [
     "weapon",
     "assist",
     "special",
@@ -59,7 +59,7 @@ class Skills {
     if (s1 == null && s2 == null) {
       return null;
     } else if (s1 == null || s2 == null) {
-      return s1 != null ? s1 : s2;
+      return s1 ?? s2;
     } else {
       return s1.prerequisites.contains(s2.idTag) ? s1 : s2;
     }

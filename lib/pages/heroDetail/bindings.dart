@@ -1,4 +1,4 @@
-import 'package:feh_tool/pages/heroDetail/controller.dart';
+import 'package:feh_rebuilder/pages/heroDetail/controller.dart';
 import 'package:get/get.dart';
 
 class HeroDetailBinding extends Bindings {

@@ -1,8 +1,8 @@
-import 'package:feh_tool/global/enum/moveType.dart';
-import 'package:feh_tool/global/enum/series.dart';
-import 'package:feh_tool/global/enum/weaponType.dart';
-import 'package:feh_tool/global/filters/filter.dart';
-import 'package:feh_tool/models/person/person.dart';
+import 'package:feh_rebuilder/global/enum/move_type.dart';
+import 'package:feh_rebuilder/global/enum/series.dart';
+import 'package:feh_rebuilder/global/enum/weapon_type.dart';
+import 'package:feh_rebuilder/global/filters/filter.dart';
+import 'package:feh_rebuilder/models/person/person.dart';
 
 enum PersonFilterType {
   isRefersher,
@@ -22,8 +22,10 @@ enum PersonFilterType {
 }
 
 class PersonFilter implements Filter<Person, PersonFilterType> {
+  @override
   List<Person> input = [];
 
+  @override
   PersonFilterType filterType;
 
   dynamic valid;
@@ -68,8 +70,17 @@ class PersonFilter implements Filter<Person, PersonFilterType> {
         return (valid as Set<WeaponTypeEnum>)
             .contains(WeaponTypeEnum.values[person.weaponType!]);
       case PersonFilterType.series:
+        // origins数值二进制化，为和SeriesEnum的index对应，把高位和地位对换
+        List<String> validator = person.origins!
+            .toRadixString(2)
+            .padLeft(SeriesEnum.values.length, "0")
+            .split("")
+            .reversed
+            .toList();
         return (valid as Set<SeriesEnum>)
-            .contains(SeriesEnum.values[person.series!]);
+            .any((element) => validator[element.index] == "1");
+      // return (valid as Set<SeriesEnum>)
+      //     .contains(SeriesEnum.values[person.series!]);
       case PersonFilterType.isDuo:
         return person.legendary?.kind == 2;
       case PersonFilterType.isMythic:

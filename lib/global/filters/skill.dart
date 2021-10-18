@@ -1,6 +1,6 @@
-import 'package:feh_tool/global/enum/moveType.dart';
-import 'package:feh_tool/global/enum/weaponType.dart';
-import 'package:feh_tool/models/skill/skill.dart';
+import 'package:feh_rebuilder/global/enum/move_type.dart';
+import 'package:feh_rebuilder/global/enum/weapon_type.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
 
 import 'filter.dart';
 
@@ -17,9 +17,11 @@ enum SkillFilterType {
 }
 
 class SkillFilter implements Filter<Skill, SkillFilterType> {
+  @override
   List<Skill> input = [];
 
   ///category:set<int> 0-6 0,武器 1，辅助  2，奥义 3，A 4，B 5，C 6，圣印（技能里没有的圣印）
+  @override
   SkillFilterType filterType;
   dynamic valid;
 
@@ -103,9 +105,9 @@ class SkillFilter implements Filter<Skill, SkillFilterType> {
         .toList();
 
     Set<int> _ = {};
-    valid.forEach((element) {
+    for (var element in valid) {
       _.addAll(element.value);
-    });
+    }
 
     // 存在element，使得validator[element]==0，则不匹配
     if (_.any((element) => validator[element] == "0")) {
@@ -124,9 +126,9 @@ class SkillFilter implements Filter<Skill, SkillFilterType> {
         .toList();
 
     Set<int> _ = {};
-    valid.forEach((element) {
+    for (var element in valid) {
       _.addAll(element.value);
-    });
+    }
 
     // 存在int element，使得validator[element]==0，则不匹配
     if (_.any((element) => validator[element] == "0")) {

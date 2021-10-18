@@ -5,7 +5,8 @@ class Picker extends StatefulWidget {
   final Widget? title;
   final List<Map> body;
   final int? nullIndex;
-  Picker({this.title, required this.body, this.nullIndex});
+  const Picker({Key? key, this.title, required this.body, this.nullIndex})
+      : super(key: key);
 
   @override
   _PickerState createState() => _PickerState();
@@ -17,9 +18,9 @@ class _PickerState extends State<Picker> {
   _PickerState();
   @override
   void initState() {
-    widget.body.forEach((element) {
+    for (var element in widget.body) {
       current.add(element["value"]);
-    });
+    }
     super.initState();
   }
 
@@ -37,8 +38,8 @@ class _PickerState extends State<Picker> {
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: Text("取消")),
-              widget.title ?? SizedBox.shrink(),
+                  child: const Text("取消")),
+              widget.title ?? const SizedBox.shrink(),
               TextButton(
                   onPressed: () {
                     if (widget.nullIndex != null) {
@@ -50,11 +51,11 @@ class _PickerState extends State<Picker> {
                           current.length == _current.length) {
                         // 非null的元素必须全部不等
                         if (Set.from(current).length == current.length) {
-                          _current.forEach((element) {
+                          for (var element in _current) {
                             if (element == widget.nullIndex) {
                               element = null;
                             }
-                          });
+                          }
                           Navigator.of(context).pop(_current);
                         }
                       }
@@ -62,7 +63,7 @@ class _PickerState extends State<Picker> {
                       Navigator.of(context).pop(current);
                     }
                   },
-                  child: Text(
+                  child: const Text(
                     "确认",
                   )),
             ],

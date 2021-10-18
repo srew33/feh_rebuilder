@@ -1,5 +1,5 @@
-// import 'package:feh_tool/global/filters/filter.dart';
-// import 'package:feh_tool/models/person/person.dart';
+// import 'package:feh_rebuilder/global/filters/filter.dart';
+// import 'package:feh_rebuilder/models/person/person.dart';
 
 // //   1: "火",
 // //   2: "水",

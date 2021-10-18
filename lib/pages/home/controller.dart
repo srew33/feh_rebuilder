@@ -1,12 +1,12 @@
-import 'package:feh_tool/global/enum/sortKey.dart';
-import 'package:feh_tool/pages/heroDetail/widgets/picker.dart';
+import 'package:feh_rebuilder/global/enum/sort_key.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'subview/favoriteController.dart';
-import 'subview/homePageController.dart';
-import 'subview/othersController.dart';
+import 'subview/favorite_controller.dart';
+import 'subview/home_page_controller.dart';
+import 'subview/others_controller.dart';
 
 class HomeController extends GetxController {
   List<String> title = const [

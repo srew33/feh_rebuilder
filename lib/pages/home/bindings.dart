@@ -1,4 +1,4 @@
-import 'package:feh_tool/pages/home/controller.dart';
+import 'package:feh_rebuilder/pages/home/controller.dart';
 import 'package:get/get.dart';
 
 class HomeBinding extends Bindings {

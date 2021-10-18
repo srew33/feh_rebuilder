@@ -4,6 +4,11 @@ import 'dart:typed_data';
 import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
+import 'package:feh_rebuilder/data_service.dart';
+import 'package:feh_rebuilder/models/personBuild/person_build.dart';
+import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:hashids2/hashids2.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart' show rootBundle;
 
@@ -12,16 +17,16 @@ import 'package:pointycastle/export.dart'
     hide RSASigner
     hide Padding;
 
-import 'package:feh_tool/models/person/person.dart';
+import 'package:feh_rebuilder/models/person/person.dart';
 
-import 'package:feh_tool/models/skill/skill.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
 
 import 'package:flutter/foundation.dart';
 
 import 'package:get_storage/get_storage.dart';
 
 class Utils {
-  static const List<String> statKeys = const [
+  static const List<String> statKeys = [
     "hp",
     "atk",
     "spd",
@@ -32,8 +37,8 @@ class Utils {
   //int growValue = ((40 - 1) * (growth_rates[statKey]! * (0.79 + (0.07 * 5))).truncate() /100).truncate();
   // 的差值得到，注意差值为3点的实际为4点（优劣势属性在计算1级真实属性时会+/-1点），这里
   // 为了简便直接给出计算得出的列表，通过查表可以得知某属性是否优势/劣势
-  static const List<int> advantageList = const [25, 45, 70, 90];
-  static const List<int> disAdvantageList = const [10, 30, 50, 75, 95];
+  static const List<int> advantageList = [25, 45, 70, 90];
+  static const List<int> disAdvantageList = [10, 30, 50, 75, 95];
 
   ///计算给定条件的角色属性，返回的结果是不装备武器的基础值
   ///
@@ -205,10 +210,10 @@ class Utils {
     // 从+1到+5循环,大于5的部分下面计算
     for (int i = 0; i < merged % 5; i++) {
       List<int> toDo = [(i * 2) % 5, (i * 2 + 1) % 5];
-      toDo.forEach((index) {
+      for (var index in toDo) {
         deltaStats[sortedStats.keys.elementAt(index)] =
             deltaStats[sortedStats.keys.elementAt(index)]! + 1;
-      });
+      }
     }
 
     // 如果merge大于等于5， 每+5则五维再+2
@@ -228,7 +233,7 @@ class Utils {
 
 // ---------------------------------------计算最终数据-----------------------------
     Map<String, int> result = {};
-    statKeys.forEach((statKey) {
+    for (var statKey in statKeys) {
       // 该属性到指定等级的成长值
       int growValue = ((newLevel - oldLevel) *
               (growth_rates[statKey]! * (0.79 + (0.07 * rarity))).truncate() /
@@ -236,7 +241,7 @@ class Utils {
           .truncate();
 
       result[statKey] = base_stats[statKey]! + deltaStats[statKey]! + growValue;
-    });
+    }
     // 测试用
     // if (kDebugMode) {
     // print("""$rarity星$newLevel级突破$merged次
@@ -322,6 +327,7 @@ class Utils {
 
   static void debug(Object o) {
     if (!kReleaseMode) {
+      // ignore: avoid_print
       print(o);
     }
     // assert(() {
@@ -367,9 +373,9 @@ class Utils {
           ..createSync(recursive: true)
           ..writeAsBytesSync(data);
       } else {
-        print(filename);
+        Utils.debug(filename);
         Directory(p.join(args[1].path, "update", filename))
-          ..createSync(recursive: true);
+            .createSync(recursive: true);
       }
     }
 
@@ -407,10 +413,85 @@ class Utils {
   static Future<void> cleanCache(Directory tempDir) async {
     // Directory tempDir = GetPlatform.isMobile
     //     ? await getTemporaryDirectory()
-    //     : Directory(r"H:\GitProject\flutter\feh_heroes\feh_tool\cache");
+    //     : Directory(r"H:\GitProject\flutter\feh_heroes\feh_rebuilder\cache");
     // 最后清空缓存文件夹，filepicker会将选择的文件缓存到这里影响下次更新，因此最好全部删除
     if (await tempDir.exists()) {
       await tempDir.delete(recursive: true);
     }
+  }
+
+  /// 自定义build转字符串
+  static String encodeBuild(
+      PersonBuild build, List<Skill?> skills, Person person) {
+    List<int> all = [];
+
+    all.add(person.idNum!);
+    all.add(
+        build.advantage == null ? 9 : Utils.statKeys.indexOf(build.advantage!));
+    all.add(build.disAdvantage == null
+        ? 9
+        : Utils.statKeys.indexOf(build.disAdvantage!));
+    all.add(build.rarity);
+    all.add(build.merged);
+    all.add(build.dragonflowers);
+    all.add(build.resplendent ? 1 : 0);
+    all.add(build.summonerSupport ? 1 : 0);
+    all.add(build.arenaScore);
+    all.addAll([for (Skill? s in skills) s == null ? 0 : s.idNum!]);
+    // HashIds主要实现多个int的合并编码和压缩，不需要加密，所以不用加盐
+    String result = HashIds().encodeList(all);
+
+    return result;
+  }
+
+  /// 字符串转自定义build
+  static PersonBuild? decodeBuild(String encoded, DataService data) {
+    List<int> all = HashIds().decode(encoded);
+    PersonBuild? result;
+
+    if (all.length != 17) {
+      return result;
+    }
+
+    Iterable<Map<String, dynamic>> skills =
+        (data.skillBox.getValues() as Iterable<dynamic>)
+            .cast<Map<String, dynamic>>();
+
+    String personTag = (data.personBox.getValues() as Iterable<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .firstWhere((element) => element["id_num"] == all[0])["id_tag"];
+
+    List<String?> skillsTags = [
+      for (int idNum in all.sublist(9, 17))
+        idNum == 0
+            ? null
+            : skills
+                .firstWhere((element) => element["id_num"] == idNum)["id_tag"]
+    ];
+    result = PersonBuild(personTag: personTag, equipSkills: skillsTags)
+      ..advantage = all[1] == 9 ? null : statKeys[all[1]]
+      ..disAdvantage = all[2] == 9 ? null : statKeys[all[2]]
+      ..rarity = all[3]
+      ..merged = all[4]
+      ..dragonflowers = all[5]
+      ..resplendent = all[6] == 1 ? true : false
+      ..summonerSupport = all[7] == 1 ? true : false
+      ..arenaScore = all[8];
+
+    return result;
+  }
+
+  static void showToast(String info) {
+    Fluttertoast.cancel();
+
+    Fluttertoast.showToast(
+      msg: info,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }
 }
