@@ -115,6 +115,25 @@ class FilterDraw extends GetView<HomePageController> {
                               )
                           ],
                         ),
+                      Obx(
+                        () => CheckboxListTile(
+                          title: const Text("最新"),
+                          value: controller
+                              .isSelected(PersonFilterType.recentlyUpdated),
+                          onChanged: (selected) {
+                            selected ??= false;
+                            if (selected) {
+                              controller.cacheSelectedFilter
+                                  .add(PersonFilterType.recentlyUpdated);
+                            } else {
+                              controller.cacheSelectedFilter
+                                  .remove(PersonFilterType.recentlyUpdated);
+                              controller.selectedFilter
+                                  .remove(PersonFilterType.recentlyUpdated);
+                            }
+                          },
+                        ),
+                      ),
                       ExpansionTile(
                         title: const Text("更多"),
                         children: [

@@ -1,15 +1,20 @@
 import 'dragonflowers.dart';
 import 'growth_rates.dart';
+
 import 'json_person.dart';
 import 'legendary.dart';
 import 'skills.dart';
 import 'stats.dart';
 
 class Person extends JsonPerson {
-  int? rarity;
+  int minRarity;
+  int maxRarity;
+  int type;
   bool? resplendentHero;
   int bst;
+  bool recentlyUpdate;
   Stats? defaultStats;
+  Map<String, String> translatedNames;
 
   Person({
     String? idTag,
@@ -33,10 +38,14 @@ class Person extends JsonPerson {
     Stats? baseStats,
     GrowthRates? growthRates,
     Skills? skills,
-    this.rarity = 5,
+    this.minRarity = 0,
+    this.maxRarity = 0,
     this.resplendentHero = false,
     this.bst = 0,
+    this.type = 0,
+    this.recentlyUpdate = false,
     this.defaultStats,
+    this.translatedNames = const {},
   }) : super(
           idTag: idTag,
           roman: roman,
@@ -93,12 +102,20 @@ class Person extends JsonPerson {
             : GrowthRates.fromJson(
                 json['growth_rates'] as Map<String, dynamic>),
         skills: Skills.fromJson(json["skills"]),
-        rarity: json['rarity'] as int? ?? 3,
+        minRarity: json['min_rarity'] as int? ?? 0,
+        maxRarity: json['max_rarity'] as int? ?? 0,
+        type: json['type'] as int? ?? 0,
         resplendentHero: json["resplendent_hero"] as bool? ?? false,
+        recentlyUpdate: json["recently_update"] as bool? ?? false,
         bst: json['bst'] as int? ?? 0,
         defaultStats: json['default_stats'] != null
             ? Stats.fromJson(json['default_stats'] as Map<String, dynamic>)
             : Stats(hp: 0, atk: 0, spd: 0, def: 0, res: 0),
+        translatedNames:
+            (json["translated_names"] as Map<String, dynamic>?) == null
+                ? {}
+                : (json["translated_names"] as Map<String, dynamic>)
+                    .cast<String, String>(),
       );
 
   @override
@@ -124,10 +141,14 @@ class Person extends JsonPerson {
         'base_stats': baseStats?.toJson(),
         'growth_rates': growthRates?.toJson(),
         'skills': skills?.toJson(),
-        "rarity": rarity,
+        "min_rarity": minRarity,
+        "max_rarity": maxRarity,
         "resplendent_hero": resplendentHero,
+        "recently_update": recentlyUpdate,
         "bst": bst,
+        "type": type,
         "default_stats": defaultStats?.toJson(),
+        "translated_names": translatedNames,
         // 'skills': skills?.map((e) => e.map((e) => e.map((e) => e.map((e) => e.map((e) => e.map((e) => e.toJson()).toList()).toList()).toList()).toList()).toList()).toList(),
       };
 

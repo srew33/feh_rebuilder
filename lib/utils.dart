@@ -73,6 +73,7 @@ class Utils {
     int dragonflowers = 0,
     bool resplendent = false,
     bool summonerSupport = false,
+    String? ascendedAsset,
   ]) {
     // ignore: non_constant_identifier_names
     Map<String, int> base_stats = person.baseStats!.toJson();
@@ -88,9 +89,13 @@ class Utils {
         growth_rates[advantage] = growth_rates[advantage]! + 5;
         growth_rates[disadvantage] = growth_rates[disadvantage]! - 5;
       }
-    } else {
-      throw "calcStats 性格传入错误";
     }
+    if (ascendedAsset != null) {
+      assert(ascendedAsset != advantage);
+      base_stats[ascendedAsset] = base_stats[ascendedAsset]! + 1;
+      growth_rates[ascendedAsset] = growth_rates[ascendedAsset]! + 5;
+    }
+
     if (kDebugMode) {
       // print("真实三星属性为：$base_stats");
     }
@@ -195,12 +200,15 @@ class Utils {
     // 如果中性，前三高属性+1,有优劣属性 突破+1时劣势属性+3或+4
     if (merged > 0) {
       if (advantage == null && disadvantage == null) {
-        // 中性
+        // 中性，去除掉开花属性
+        List<String> _ = sortedStats.keys.toList();
+        _.remove(ascendedAsset);
+
         for (int i = 0; i < 3; i++) {
-          deltaStats[sortedStats.keys.elementAt(i)] =
-              deltaStats[sortedStats.keys.elementAt(i)]! + 1;
+          deltaStats[_[i]] = deltaStats[_[i]]! + 1;
         }
-      } else if (advantage != disadvantage) {
+      } else {
+        assert(advantage != disadvantage);
         deltaStats[disadvantage!] =
             disAdvantageList.contains(growth_rates[disadvantage]! + 5)
                 ? deltaStats[disadvantage]! + 4
@@ -230,6 +238,19 @@ class Utils {
       });
       // print("$rarity星1级突破$merged次神龙之花0次属性为：$mergedStats");
     }
+    // -----------------------------------绽放个性------------------------------
+    // int ascendedStats = 0;
+
+    // if (ascendedAsset != null) {
+    //   assert(ascendedAsset != advantage && statKeys.contains(ascendedAsset));
+    //   // base_stats[ascendedAsset] = base_stats[ascendedAsset]! + 1;
+    //   ascendedStats = advantageList.contains(growth_rates[ascendedAsset]!) ||
+    //           (disAdvantageList.contains(growth_rates[ascendedAsset]! + 5) &&
+    //               disadvantage == ascendedAsset)
+    //       ? 4
+    //       : 3;
+    //   print(ascendedStats);
+    // }
 
 // ---------------------------------------计算最终数据-----------------------------
     Map<String, int> result = {};
@@ -242,6 +263,20 @@ class Utils {
 
       result[statKey] = base_stats[statKey]! + deltaStats[statKey]! + growValue;
     }
+
+    // if (ascendedStats != 0) {
+    //   // 中性且突破大于0时检查选择的开花个性是不是在排序后属性的前三个，是的话给所选属性补2，第四个属性补1，
+    //   if (sortedStats.keys.toList().sublist(0, 3).contains(ascendedAsset) &&
+    //       advantage == null &&
+    //       disadvantage == null &&
+    //       merged > 0) {
+    //     result[ascendedAsset!] = result[ascendedAsset]! + ascendedStats - 1;
+    //     result[sortedStats.keys.toList()[3]] =
+    //         result[sortedStats.keys.toList()[3]]! + 1;
+    //   } else {
+    //     result[ascendedAsset!] = result[ascendedAsset]! + ascendedStats;
+    //   }
+    // }
     // 测试用
     // if (kDebugMode) {
     // print("""$rarity星$newLevel级突破$merged次
@@ -438,6 +473,9 @@ class Utils {
     all.add(build.summonerSupport ? 1 : 0);
     all.add(build.arenaScore);
     all.addAll([for (Skill? s in skills) s == null ? 0 : s.idNum!]);
+    all.add(build.ascendedAsset == null
+        ? 9
+        : Utils.statKeys.indexOf(build.ascendedAsset!));
     // HashIds主要实现多个int的合并编码和压缩，不需要加密，所以不用加盐
     String result = HashIds().encodeList(all);
 
@@ -449,8 +487,8 @@ class Utils {
     List<int> all = HashIds().decode(encoded);
     PersonBuild? result;
 
-    if (all.length != 17) {
-      return result;
+    if (all.length != 18) {
+      return null;
     }
 
     Iterable<Map<String, dynamic>> skills =
@@ -476,7 +514,8 @@ class Utils {
       ..dragonflowers = all[5]
       ..resplendent = all[6] == 1 ? true : false
       ..summonerSupport = all[7] == 1 ? true : false
-      ..arenaScore = all[8];
+      ..arenaScore = all[8]
+      ..ascendedAsset = all[17] == 9 ? null : statKeys[all[17]];
 
     return result;
   }

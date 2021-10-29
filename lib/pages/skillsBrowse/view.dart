@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:feh_rebuilder/global/enum/weapon_type.dart';
 import 'package:feh_rebuilder/global/filters/skill.dart';
+import 'package:feh_rebuilder/global/theme/text_theme.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/pages/heroDetail/widgets/hero_icon.dart';
@@ -318,25 +319,32 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
                           ListTile(
                             title: Text.rich(TextSpan(children: [
                               if (controller.category != 15)
-                                TextSpan(text: "SP: ${s.spCost.toString()}\n"),
+                                TextSpan(
+                                  text: "SP: ${s.spCost.toString()}\n",
+                                  style: Get.textTheme.subtitle2,
+                                ),
                               TextSpan(
-                                  text: (s.descId!)
-                                      .tr
-                                      .replaceAll("\n", " ")
-                                      .replaceAll(r"$a", "")),
+                                text: (s.descId!)
+                                    .tr
+                                    // .replaceAll("\n", " ")
+                                    .replaceAll(r"$a", ""),
+                                style: Get.textTheme.descStyle,
+                              ),
                               if (s.refineId != null)
                                 TextSpan(
                                   text: "\n" +
                                       (("MSID_H_${s.refineId!.split("_")[1]}")
                                               .tr)
-                                          .replaceAll("\n", "")
+                                          // .replaceAll("\n", "")
                                           .replaceAll(r"$a", ""),
-                                  style: const TextStyle(color: Colors.green),
+                                  style: Get.textTheme.descStyle.merge(
+                                      const TextStyle(color: Colors.green)),
                                 ),
                               if (s.exclusive!)
-                                const TextSpan(
+                                TextSpan(
                                   text: "\n无法继承",
-                                  style: TextStyle(color: Colors.red),
+                                  style: Get.textTheme.descStyle.merge(
+                                      const TextStyle(color: Colors.red)),
                                 ),
                             ])),
                           ),

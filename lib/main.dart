@@ -95,6 +95,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         // fontFamily: "NotoSansCJKsc",
       ),
+      // 禁止字体大小随系统改变，如果有必要再打开
+      // builder: (context, child) => MediaQuery(
+      //   data: MediaQuery.of(context).copyWith(textScaleFactor: 1),
+      //   child: child!,
+      // ),
       translations: Translation(),
       locale:
           dataService.languageDict[dataService.customBox.read("dataLanguage")],

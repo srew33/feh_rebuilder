@@ -176,11 +176,17 @@ class __ListItemState extends State<_ListItem> {
                           style: Get.textTheme.bodyText2,
                         )
                       : Text(
-                          "+${controller.all[i]!.advantage}-${controller.all[i]!.disAdvantage}",
+                          "+" +
+                              "CUSTOM_STATS_${controller.all[i]!.advantage!.toUpperCase()}"
+                                  .tr +
+                              "-" +
+                              "CUSTOM_STATS_${controller.all[i]!.disAdvantage!.toUpperCase()}"
+                                  .tr,
+                          // "+${controller.all[i]!.advantage}-${controller.all[i]!.disAdvantage}",
                           style: Get.textTheme.bodyText2,
                         ),
                   Text(
-                    "竞技场分数 ${controller.all[i]!.arenaScore}",
+                    "${controller.all[i]!.arenaScore}",
                     style: Get.textTheme.bodyText2,
                   ),
                 ],

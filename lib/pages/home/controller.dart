@@ -34,7 +34,7 @@ class HomeController extends GetxController {
                 "maxValue": SortKey.values.length - 1,
                 "value": homePageController.currentSortKey.index,
                 "textMapper": (String key) {
-                  return SortKey.values[int.tryParse(key)!].value;
+                  return SortKey.values[int.tryParse(key)!].value.tr;
                 }
               }
             ]));

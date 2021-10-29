@@ -43,21 +43,13 @@ class _PickerState extends State<Picker> {
               TextButton(
                   onPressed: () {
                     if (widget.nullIndex != null) {
-                      List<int?> _current = [...current];
-                      // 检测是否都是null或都不是null
-                      current.removeWhere(
-                          (element) => element == widget.nullIndex);
-                      if (current.isEmpty ||
-                          current.length == _current.length) {
-                        // 非null的元素必须全部不等
-                        if (Set.from(current).length == current.length) {
-                          for (var element in _current) {
-                            if (element == widget.nullIndex) {
-                              element = null;
-                            }
-                          }
-                          Navigator.of(context).pop(_current);
-                        }
+                      // 全不为null(且全不相等)或全为null
+                      if ((!current.any(
+                                  (element) => element == widget.nullIndex) &&
+                              current.length == current.toSet().length) ||
+                          !current
+                              .any((element) => element != widget.nullIndex)) {
+                        Navigator.of(context).pop(current);
                       }
                     } else {
                       Navigator.of(context).pop(current);

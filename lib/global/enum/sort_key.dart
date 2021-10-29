@@ -1,6 +1,6 @@
 enum SortKey {
   // idNum,
-  roman,
+  translations,
   bst,
   stats,
   hp,
@@ -15,22 +15,22 @@ extension SortKeyExtension on SortKey {
     switch (this) {
       // case SortKey.idNum:
       //   return "序号";
-      case SortKey.roman:
-        return "罗马音";
+      case SortKey.translations:
+        return "罗马名/拼音";
       case SortKey.bst:
         return "白值(含死斗)";
       case SortKey.stats:
         return "白值(不含死斗)";
       case SortKey.hp:
-        return "HP";
+        return "CUSTOM_STATS_HP";
       case SortKey.atk:
-        return "ATK";
+        return "CUSTOM_STATS_ATK";
       case SortKey.spd:
-        return "SPD";
+        return "CUSTOM_STATS_SPD";
       case SortKey.def:
-        return "DEF";
+        return "CUSTOM_STATS_DEF";
       case SortKey.res:
-        return "RES";
+        return "CUSTOM_STATS_RES";
     }
   }
 }

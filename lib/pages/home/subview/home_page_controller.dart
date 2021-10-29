@@ -1,3 +1,5 @@
+import 'dart:ui' show Locale;
+
 import 'package:feh_rebuilder/data_service.dart';
 import 'package:feh_rebuilder/global/enum/move_type.dart';
 import 'package:feh_rebuilder/global/enum/series.dart';
@@ -30,7 +32,7 @@ class HomePageController extends GetxController {
   List<WeaponType> weaponType = [];
 
   /// 当前排序，默认是roman
-  SortKey currentSortKey = SortKey.roman;
+  SortKey currentSortKey = SortKey.translations;
 
   ///主页的listview，用来控制刷新数据
   JumpListScrollController sc = JumpListScrollController();
@@ -234,29 +236,36 @@ class HomePageController extends GetxController {
         }
         break;
 
-      case SortKey.roman:
+      case SortKey.translations:
         // listKey.currentState?.showHeader = true;
-
-        _sortByRoman(_all);
+        // 华为的机器读取当前的locale似乎会和其他机器不一样，手动读取靠谱一点
+        Locale current =
+            data.languageDict[data.customBox.read("dataLanguage")] ??
+                const Locale("zh", "TW");
+        String localeStr = "${current.languageCode}_${current.countryCode}";
+        _sortByTranslations(_all, localeStr);
         grouped.clear();
         for (var person in _all) {
-          if (!grouped.containsKey(person.roman![0])) {
+          String translatedNames =
+              person.translatedNames[localeStr] ?? person.roman!;
+          if (!grouped.containsKey(translatedNames[0].toUpperCase())) {
             grouped.addAll({
-              person.roman![0]: [person]
+              translatedNames[0].toUpperCase(): [person]
             });
           } else {
-            grouped[person.roman![0]]!.add(person);
+            grouped[translatedNames[0].toUpperCase()]!.add(person);
           }
         }
         break;
     }
   }
 
-  void _sortByRoman(List<Person> personList) {
+  void _sortByTranslations(List<Person> personList, String localeStr) {
     personList.sort((Person p1, Person p2) {
       // 比较罗马名,不包含下划线后的内容
-      String nameP1 = p1.roman!.split("_")[0];
-      String nameP2 = p2.roman!.split("_")[0];
+
+      String nameP1 = p1.translatedNames[localeStr] ?? p1.roman!.split("_")[0];
+      String nameP2 = p2.translatedNames[localeStr] ?? p2.roman!.split("_")[0];
       int r = nameP1.compareTo(nameP2);
       if (r != 0) {
         return r;

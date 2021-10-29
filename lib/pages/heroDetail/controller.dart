@@ -33,6 +33,8 @@ class HeroDetailController extends GetxController {
   String? advantage;
   // 劣势属性
   String? disadvantage;
+  // 开花属性
+  final ascendedAsset = Rx<String?>(null);
   // 神龙之花
   int dragonFlower = 0;
   // 突破次数
@@ -293,16 +295,18 @@ class HeroDetailController extends GetxController {
 
   void calBaseStats() {
     baseStats = Stats.fromJson(Utils.calcStats(
-        hero,
-        oldLevel,
-        targetLevel,
-        rarity,
-        advantage,
-        disadvantage,
-        merged,
-        dragonFlower,
-        isResplendent,
-        isSummonerSupport));
+      hero,
+      oldLevel,
+      targetLevel,
+      rarity,
+      advantage,
+      disadvantage,
+      merged,
+      dragonFlower,
+      isResplendent,
+      isSummonerSupport,
+      ascendedAsset.value,
+    ));
     equipStats.clear();
     equipStats.add(baseStats);
 
@@ -324,6 +328,7 @@ class HeroDetailController extends GetxController {
         ..summonerSupport = isSummonerSupport
         ..arenaScore = arenaScore
         ..custom = true
+        ..ascendedAsset = ascendedAsset.value
         ..timeStamp = DateTime.now().millisecondsSinceEpoch
         ..resplendent = isResplendent;
 
@@ -358,6 +363,7 @@ class HeroDetailController extends GetxController {
       ..dragonflowers = dragonFlower
       ..summonerSupport = isSummonerSupport
       ..arenaScore = arenaScore
+      ..ascendedAsset = ascendedAsset.value
       ..resplendent = isResplendent;
   }
 
@@ -375,6 +381,7 @@ class HeroDetailController extends GetxController {
       dragonFlower = build.dragonflowers;
       isResplendent = build.resplendent;
       isSummonerSupport = build.summonerSupport;
+      ascendedAsset.value = build.ascendedAsset;
     } else {}
 
     initSkills();
@@ -392,6 +399,7 @@ class HeroDetailController extends GetxController {
             dragonFlower,
             isResplendent,
             isSummonerSupport,
+            ascendedAsset.value,
           ))
         : Stats.fromJson(Utils.calcStats(hero, 1, 40, 5));
 

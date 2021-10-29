@@ -19,6 +19,7 @@ enum PersonFilterType {
   moveType,
   weaponType,
   series,
+  recentlyUpdated,
 }
 
 class PersonFilter implements Filter<Person, PersonFilterType> {
@@ -91,6 +92,8 @@ class PersonFilter implements Filter<Person, PersonFilterType> {
       case PersonFilterType.isLegend:
         return person.legendary?.kind == 1 &&
             _legendaryKind.contains(person.legendary?.element);
+      case PersonFilterType.recentlyUpdated:
+        return person.recentlyUpdate;
       default:
         throw "错误的过滤类型";
     }

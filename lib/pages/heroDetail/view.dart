@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:feh_rebuilder/global/theme/text_theme.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/pages/heroDetail/widgets/hero_icon.dart';
 import 'package:feh_rebuilder/global/enum/move_type.dart';
@@ -128,7 +129,35 @@ class HeroDetail extends GetView<HeroDetailController> {
               onChanged: controller.hero.resplendentHero!
                   ? (bool newVal) => controller.setResplendent(newVal)
                   : null,
-            )
+            ),
+          ],
+        ),
+      ),
+      ListTile(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text("绽放个性"),
+            Obx(() => DropdownButton(
+                  value: controller.ascendedAsset.value,
+                  underline: const SizedBox.shrink(),
+                  items: [
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text("N/A"),
+                    ),
+                    for (var key in controller.statsMap.values)
+                      DropdownMenuItem(
+                        value: key,
+                        child: Text("CUSTOM_STATS_${key.toUpperCase()}".tr),
+                        enabled: key != controller.advantage,
+                      ),
+                  ],
+                  onChanged: (dynamic obj) {
+                    controller.ascendedAsset.value = obj;
+                    controller.calBaseStats();
+                  },
+                )),
           ],
         ),
       ),
@@ -155,7 +184,7 @@ class HeroDetail extends GetView<HeroDetailController> {
                           width: 40,
                           child: Center(
                             child: Text(
-                              propName.toUpperCase(),
+                              "CUSTOM_STATS_${propName.toUpperCase()}".tr,
                               style: TextStyle(color: getPropColor(propName)),
                             ),
                           ),
@@ -222,8 +251,10 @@ class HeroDetail extends GetView<HeroDetailController> {
       );
 
       widgetList.add(ListTile(
-          title:
-              Text("MPID_LEGEND_${controller.hero.idTag!.split("_")[1]}".tr)));
+          title: Text(
+        "MPID_LEGEND_${controller.hero.idTag!.split("_")[1]}".tr,
+        style: Get.textTheme.descStyle,
+      )));
 
       // 技能
       if (controller.hero.legendary?.duoSkillId != null) {
@@ -231,10 +262,13 @@ class HeroDetail extends GetView<HeroDetailController> {
           title: const Text("特殊技能效果"),
           children: [
             ListTile(
+              dense: true,
               title: Text(
-                  "MSID_H_${controller.hero.legendary!.duoSkillId!.split("_")[1]}"
-                      .tr
-                      .replaceAll(r"$a", "")),
+                "MSID_H_${controller.hero.legendary!.duoSkillId!.split("_")[1]}"
+                    .tr
+                    .replaceAll(r"$a", ""),
+                style: Get.textTheme.descStyle,
+              ),
             )
           ],
         ));
@@ -254,15 +288,15 @@ class HeroDetail extends GetView<HeroDetailController> {
           children: [
             ClipOval(
               child: _buildAvatar(
-                  "assets/faces/${controller.hero.faceName}EX01.webp", 50),
+                  "assets/faces/${controller.hero.faceName}EX01.webp", 60),
             ),
             ClipOval(
                 child: _buildAvatar(
-                    "assets/faces/${controller.hero.faceName}.webp", 50)),
+                    "assets/faces/${controller.hero.faceName}.webp", 60)),
           ],
         ),
         const SizedBox(
-          width: 10,
+          width: 5,
         ),
         // 武器和移动类型
         Column(
@@ -275,8 +309,32 @@ class HeroDetail extends GetView<HeroDetailController> {
                 "assets/weapon/${controller.hero.weaponType}.webp", 25),
           ],
         ),
+        // const SizedBox(
+        //   width: 10,
+        // ),
+        // Column(
+        //   children: controller.hero.minRarity == 0
+        //       ? controller.hero.maxRarity == 0
+        //           ? [const SizedBox.shrink()]
+        //           : [
+        //               Image.asset(
+        //                   "assets/static/Rarity${controller.hero.maxRarity}.png"),
+        //             ]
+        //       : [
+        //           Image.asset(
+        //               "assets/static/Rarity${controller.hero.minRarity}.png"),
+        //           const SizedBox(height: 2),
+        //           const Icon(
+        //             Icons.arrow_downward,
+        //             size: 10,
+        //           ),
+        //           const SizedBox(height: 2),
+        //           Image.asset(
+        //               "assets/static/Rarity${controller.hero.maxRarity}.png"),
+        //         ],
+        // ),
         const SizedBox(
-          width: 10,
+          width: 5,
         ),
         // 突破
         CircleBtn(
@@ -302,7 +360,7 @@ class HeroDetail extends GetView<HeroDetailController> {
           },
         ),
         const SizedBox(
-          width: 10,
+          width: 5,
         ),
         // 性格
         TraitsBtn(
@@ -324,7 +382,9 @@ class HeroDetail extends GetView<HeroDetailController> {
                         : 0,
                     "textMapper": (String key) {
                       return controller.statsMap[key] != null
-                          ? "+" + controller.statsMap[key]!.toUpperCase()
+                          ? "+" +
+                              "CUSTOM_STATS_${controller.statsMap[key]!.toUpperCase()}"
+                                  .tr
                           : "N/A";
                     }
                   },
@@ -339,25 +399,48 @@ class HeroDetail extends GetView<HeroDetailController> {
                         : 0,
                     "textMapper": (String key) {
                       return controller.statsMap[key] != null
-                          ? "-" + controller.statsMap[key]!.toUpperCase()
+                          ? "-" +
+                              "CUSTOM_STATS_${controller.statsMap[key]!.toUpperCase()}"
+                                  .tr
                           : "N/A";
                     }
                   },
                 ]);
             if (_result != null) {
-              controller.advantage = _result[0] == null
-                  ? null
-                  : controller.statsMap[_result[0].toString()];
-              controller.disadvantage = _result[0] == null
-                  ? null
-                  : controller.statsMap[_result[1].toString()];
-              controller.traitsBtnKey.currentState!.setNewDisplay(
-                  "+${controller.advantage ?? ""}-${controller.disadvantage ?? ""}");
-              controller.calBaseStats();
+              if (_result[0] != 0) {
+                if (controller.statsMap[_result[0].toString()] ==
+                    controller.ascendedAsset.value) {
+                  Utils.showToast("开花属性和优势属性不能相同");
+                } else {
+                  controller.advantage =
+                      controller.statsMap[_result[0].toString()];
+                  // _result[0] _result[1]有一方为null则全部为null
+                  controller.disadvantage =
+                      controller.statsMap[_result[1].toString()];
+
+                  controller.traitsBtnKey.currentState!.setNewDisplay("+" +
+                      "CUSTOM_STATS_${controller.advantage!.toUpperCase()}".tr +
+                      "-" +
+                      "CUSTOM_STATS_${controller.disadvantage!.toUpperCase()}"
+                          .tr);
+                  controller.calBaseStats();
+                }
+              } else {
+                controller.advantage = null;
+                // _result[0] _result[1]有一方为null则全部为null
+                controller.disadvantage = null;
+
+                controller.traitsBtnKey.currentState!.setNewDisplay("+    -");
+                controller.calBaseStats();
+              }
             }
           },
-          displayValue:
-              "+${controller.advantage ?? "    "} -${controller.disadvantage ?? ""}",
+          displayValue: controller.advantage == null
+              ? "+    -"
+              : "+" +
+                  "CUSTOM_STATS_${controller.advantage!.toUpperCase()}".tr +
+                  "-" +
+                  "CUSTOM_STATS_${controller.disadvantage!.toUpperCase()}".tr,
         ),
 
         const SizedBox(
@@ -392,6 +475,38 @@ class HeroDetail extends GetView<HeroDetailController> {
     );
   }
 
+  Widget _buildRarity() {
+    return ListTile(
+      tileColor: Colors.grey.shade200,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text("稀有度"),
+          controller.hero.minRarity == 0
+              ? controller.hero.maxRarity == 0
+                  ? const Text("暂未添加")
+                  : Row(
+                      children: [
+                        Image.asset(
+                            "assets/static/Rarity${controller.hero.maxRarity}.png"),
+                        // Text(PersonType.values[controller.hero.type].value),
+                      ],
+                    )
+              : Row(
+                  children: [
+                    Image.asset(
+                        "assets/static/Rarity${controller.hero.minRarity}.png"),
+                    const Text("--"),
+                    Image.asset(
+                        "assets/static/Rarity${controller.hero.maxRarity}.png"),
+                    // Text(PersonType.values[controller.hero.type].value),
+                  ],
+                )
+        ],
+      ),
+    );
+  }
+
   List<Widget> _buildExclusiveTile() {
     return controller.origWeaponRefine.isNotEmpty
         ? [
@@ -404,13 +519,15 @@ class HeroDetail extends GetView<HeroDetailController> {
                 ListTile(
                     title: Text.rich(TextSpan(children: [
                   TextSpan(
-                    text: (s.keys.first.descId!).tr.replaceAll("\n", ""),
-                    style: const TextStyle(),
+                    text: (s.keys.first.descId!).tr.replaceAll(r"$a", ""),
+                    style: Get.textTheme.descStyle,
                   ),
                   const TextSpan(text: "\n"),
                   TextSpan(
-                    text: (s.values.first.descId!).tr.replaceAll("\n", ""),
-                    style: const TextStyle(color: Colors.green),
+                    text: (s.values.first.descId!).tr.replaceAll(r"$a", ""),
+                    style: Get.textTheme.descStyle.merge(
+                      const TextStyle(color: Colors.green),
+                    ),
                   ),
                 ])))
               ]),
@@ -543,28 +660,37 @@ class HeroDetail extends GetView<HeroDetailController> {
                     title: Text.rich(TextSpan(children: [
                       if (index != 7)
                         TextSpan(
-                            text:
-                                "SP:${controller.heroSkills[index]!.spCost.toString()}\n"),
+                          text:
+                              "SP:${controller.heroSkills[index]!.spCost.toString()}\n",
+                          style: Get.textTheme.subtitle2,
+                        ),
                       // 技能描述
                       TextSpan(
-                          text: (controller.heroSkills[index]!.descId!)
-                              .tr
-                              .replaceAll("\n", "")
-                              .replaceAll(r"$a", "")),
+                        text: (controller.heroSkills[index]!.descId!)
+                            .tr
+                            // .replaceAll("\n", "")
+                            .replaceAll(r"$a", ""),
+                        style: Get.textTheme.descStyle,
+                      ),
                       // 技能特效描述
                       if (controller.heroSkills[index]!.refineId != null)
                         TextSpan(
                           text: "\n" +
                               (("MSID_H_${controller.heroSkills[index]!.refineId!.split("_")[1]}")
                                       .tr)
-                                  .replaceAll("\n", "")
+                                  // .replaceAll("\n", "")
                                   .replaceAll(r"$a", ""),
-                          style: const TextStyle(color: Colors.green),
+                          style: Get.textTheme.descStyle.merge(
+                            const TextStyle(
+                              color: Colors.green,
+                            ),
+                          ),
                         ),
                       if (controller.heroSkills[index]!.exclusive!)
-                        const TextSpan(
+                        TextSpan(
                           text: "\n无法继承",
-                          style: TextStyle(color: Colors.red),
+                          style: Get.textTheme.descStyle
+                              .merge(const TextStyle(color: Colors.red)),
                         ),
                     ])),
                   ),
@@ -702,6 +828,7 @@ class HeroDetail extends GetView<HeroDetailController> {
                 children: ListTile.divideTiles(context: context, tiles: [
                   // 头像、性格等，
                   _buildBaseInfo(),
+                  _buildRarity(),
                   // 数值显示
                   for (Widget w in _buildStats()) w,
 

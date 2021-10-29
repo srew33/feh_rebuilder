@@ -123,10 +123,19 @@ class _ShareWidgetState extends State<ShareWidget> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               if (index < 5)
-                Text(
-                  key[index].toUpperCase(),
-                  style:
-                      TextStyle(fontSize: 12, color: _getStatColor(key[index])),
+                Row(
+                  children: [
+                    Text(
+                      "CUSTOM_STATS_${key[index].toUpperCase()}".tr,
+                      style: TextStyle(
+                          fontSize: 12, color: _getStatColor(key[index])),
+                    ),
+                    if (key[index] == widget.build.ascendedAsset)
+                      Image.asset(
+                        "assets/static/Icon_FlowerBud.png",
+                        height: 22,
+                      ),
+                  ],
                 ),
               if (index < 5)
                 Text(val[index].toString(),

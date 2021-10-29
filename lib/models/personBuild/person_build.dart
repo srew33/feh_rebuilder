@@ -11,6 +11,7 @@ class PersonBuild {
   int arenaScore;
   int timeStamp;
   bool custom;
+  String? ascendedAsset;
   String tag;
   String remark;
 
@@ -27,6 +28,7 @@ class PersonBuild {
     this.arenaScore = 0,
     this.timeStamp = 0,
     this.custom = false,
+    this.ascendedAsset,
     this.tag = '',
     this.remark = '',
   });
@@ -44,6 +46,7 @@ class PersonBuild {
         arenaScore: json['arena_score'] as int? ?? 0,
         timeStamp: json['time_stamp'] as int? ?? 0,
         equipSkills: (json['equip_skills'] as List<dynamic>).cast<String?>(),
+        ascendedAsset: json['ascendedAsset'] as String?,
         tag: json['tag'] as String? ?? "",
         remark: json['remark'] as String? ?? "",
       );
@@ -61,6 +64,7 @@ class PersonBuild {
         "arena_score": arenaScore,
         "custom": custom,
         "time_stamp": timeStamp,
+        'ascendedAsset': ascendedAsset,
         'tag': tag,
         'remark': remark,
       };

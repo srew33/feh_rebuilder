@@ -152,9 +152,26 @@ class Home extends GetView<HomeController> {
             },
           )),
       // floatingActionButton: FloatingActionButton(onPressed: () {
-      //   // controller.homePageController.sc.jumpTo(800);
-      //   // controller.homePageController.sc.jumpToNext();
-      //   controller.homePageController.sc.jumpToprevious();
+      //   // PID_ミカヤ PID_ロイ PID_ケンプフ
+      //   for (var stat in Utils.statKeys) {
+      //     if (stat != "spd") {
+      //       print(Utils.calcStats(
+      //         controller.homePageController.all
+      //             .firstWhere((element) => element.idTag == "PID_ロイ"),
+      //         1,
+      //         40,
+      //         5,
+      //         "spd",
+      //         "hp",
+      //         1,
+      //         0,
+      //         true,
+      //         false,
+      //         stat,
+      //         // null,
+      //       ));
+      //     }
+      //   }
       // }),
     ));
   }
