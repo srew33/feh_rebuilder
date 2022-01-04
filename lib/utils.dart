@@ -5,13 +5,13 @@ import 'package:archive/archive.dart';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
 import 'package:feh_rebuilder/data_service.dart';
+
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hashids2/hashids2.dart';
 import 'package:path/path.dart' as p;
 import 'package:flutter/services.dart' show rootBundle;
-
 import 'package:pointycastle/export.dart'
     hide Signer
     hide RSASigner
@@ -532,5 +532,34 @@ class Utils {
       textColor: Colors.white,
       fontSize: 16.0,
     );
+  }
+
+  /// 比较版本号大小，a==b => null;a < b => true; a > b => false
+  // static bool? compareVersion(String a, String b) {
+  //   try {
+  //     if (a == b) {
+  //       return null;
+  //     } else {
+  //       List<String> versionA = a.split(".");
+  //       List<String> versionB = b.split(".");
+  //       for (int i = 0; i < 3; i++) {
+  //         if (int.parse(versionA[i]) > int.parse(versionB[i])) {
+  //           return false;
+  //         } else if (int.parse(versionA[i]) < int.parse(versionB[i])) {
+  //           return true;
+  //         }
+  //       }
+  //     }
+  //     return null;
+  //   } catch (e) {
+  //     showToast("版本分析出错！");
+  //   }
+  // }
+
+  static Future<String> getChecksum(String path) async {
+    File target = File(path);
+    return await target.exists()
+        ? sha1.convert(await target.readAsBytes()).toString()
+        : "";
   }
 }

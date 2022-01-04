@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:feh_rebuilder/api_service.dart';
 import 'package:feh_rebuilder/data_service.dart';
 import 'package:feh_rebuilder/pages/heroDetail/bindings.dart';
 import 'package:feh_rebuilder/pages/home/bindings.dart';
@@ -33,8 +34,8 @@ void main() async {
       : Directory(p.join(Directory.current.absolute.path, "cache"));
 
   await compute(Utils.updateAssets, [appDir, tempDir]);
-
-  await Utils.cleanCache(tempDir);
+  // 清理file_picker选择缓存的文件
+  await Utils.cleanCache(Directory(p.join(tempDir.path, "file_picker")));
 
   await initServices(appDir, tempDir);
 
@@ -46,6 +47,8 @@ Future<void> initServices(Directory appPath, Directory tempDir) async {
 
   await Get.putAsync(
       () => DataService(appPath: appPath, tempDir: tempDir).init());
+
+  Get.lazyPut(() => ApiService().init());
   Utils.debug('all services inited ...');
 }
 

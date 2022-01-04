@@ -19,6 +19,12 @@ class DataService extends GetxService {
   late GetStorage weaponBox;
   late GetStorage weaponRefineBox;
   late GetStorage customBox;
+  // late String appVersionAlias;
+  late String appVersionAlias;
+  late int appVersion;
+  int get assetsVersion {
+    return int.parse(customBox.read("dataVersion"));
+  }
 
   Map<String, dynamic> defaultConfig = const {
     "initialed": false,
@@ -49,7 +55,7 @@ class DataService extends GetxService {
 
   Directory appPath;
   Directory tempDir;
-  late String version;
+
   DataService({required this.appPath, required this.tempDir});
 
   Future<void> releaseData() async {
@@ -75,6 +81,32 @@ class DataService extends GetxService {
     customBox.write("initialed", true);
   }
 
+  Future<DataService> init() async {
+    /// 检测启动环境是否是web，并加载相应服务（web环境数据由后端服务提供，本地环境由本地数据库或json提供）
+
+    Utils.debug("init dataService");
+
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    appVersionAlias = packageInfo.version;
+
+    // assetsVersion =
+    Utils.debug(appVersionAlias);
+
+    if (GetPlatform.isWeb) {
+      Utils.debug("web");
+    } else if (GetPlatform.isMobile) {
+      appVersion = int.parse(packageInfo.buildNumber);
+      await initMobile();
+    } else if (GetPlatform.isDesktop) {
+      appVersion = 13;
+      await initDesktop();
+    } else {
+      throw "未知平台";
+    }
+
+    return this;
+  }
+
   Future<void> initMobile() async {
     customBox = GetStorage('custom', p.join(appPath.path, "dataBox", "custom"));
     await GetStorage.init("custom");
@@ -86,14 +118,13 @@ class DataService extends GetxService {
       });
     }
 
-    Utils.debug("当前软件版本：$version");
+    Utils.debug("当前app版本：$appVersionAlias");
     // 首次启动或更新软件版本启动
-    bool initialed = isInitialed(version);
+    bool initialed = isInitialed(appVersionAlias);
     if (!initialed) {
       await releaseData();
-      customBox.write("currentVersion", version);
+      customBox.write("currentVersion", appVersionAlias);
       // 把data.version里的时间戳写入customBox
-
     }
     // 检测数据版本是否变化并写入,update.flag存在时代表更新了数据版本，initialed为false表示更新了程序版本
     File f1 = File(p.join(appPath.path, "assets", "update.flag"));
@@ -171,27 +202,5 @@ class DataService extends GetxService {
 
     moveBox = GetStorage('moveBox', r"assets\dataBox\moveBox");
     await GetStorage.init("moveBox");
-  }
-
-  Future<DataService> init() async {
-    /// 检测启动环境是否是web，并加载相应服务（web环境数据由后端服务提供，本地环境由本地数据库或json提供）
-
-    Utils.debug("init dataService");
-
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    version = packageInfo.version;
-    Utils.debug(version);
-
-    if (GetPlatform.isWeb) {
-      Utils.debug("web");
-    } else if (GetPlatform.isMobile) {
-      await initMobile();
-    } else if (GetPlatform.isDesktop) {
-      await initDesktop();
-    } else {
-      throw "未知平台";
-    }
-
-    return this;
   }
 }

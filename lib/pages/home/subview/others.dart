@@ -3,7 +3,6 @@ import 'package:feh_rebuilder/pages/heroDetail/widgets/picker.dart';
 import 'package:feh_rebuilder/pages/home/widgets/backup_dialog.dart';
 import 'package:feh_rebuilder/pages/home/widgets/update_dialog.dart';
 import 'package:feh_rebuilder/pages/skillsBrowse/controller.dart';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' show DateFormat;
@@ -110,10 +109,11 @@ class OthersPage extends GetView<OthersPageController> {
           children: [
             const Text("数据版本"),
             IconButton(
-                onPressed: () {
-                  Get.dialog(const UpdateDialog());
-                },
-                icon: const Icon(Icons.upgrade_rounded)),
+              onPressed: () {
+                Get.dialog(const UpdateDialog());
+              },
+              icon: const Icon(Icons.upgrade_rounded),
+            ),
             const Spacer(),
             TextButton(
               onPressed: () {
@@ -123,7 +123,8 @@ class OthersPage extends GetView<OthersPageController> {
                           title: const Text("完整版本号"),
                           children: [
                             Center(
-                              child: Text(controller.dataVersion),
+                              child: Text(
+                                  controller.data.assetsVersion.toString()),
                             )
                           ],
                         ));
@@ -131,13 +132,25 @@ class OthersPage extends GetView<OthersPageController> {
               child: Text(
                 DateFormat("yyyyMMdd").format(
                   DateTime.fromMillisecondsSinceEpoch(
-                    int.parse(controller.dataVersion),
+                    controller.data.assetsVersion,
                   ),
                 ),
               ),
             ),
           ],
         ),
+      ),
+      ListTile(
+        title: Row(
+          children: [
+            const Text("检查更新"),
+            const Spacer(),
+            Obx(() => Text(controller.findNewVersion.value)),
+          ],
+        ),
+        onTap: () async {
+          controller.checkUpdate();
+        },
       ),
       ListTile(
         title: Row(
@@ -148,7 +161,8 @@ class OthersPage extends GetView<OthersPageController> {
         ),
         onTap: () {
           showLicensePage(
-              context: context, applicationVersion: controller.data.version);
+              context: context,
+              applicationVersion: controller.data.appVersionAlias);
         },
       ),
     ]);
