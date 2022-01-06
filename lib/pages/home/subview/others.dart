@@ -1,3 +1,6 @@
+import 'package:cloud_db/cloud_db.dart';
+
+import 'package:feh_rebuilder/data_service.dart';
 import 'package:feh_rebuilder/global/filters/skill.dart';
 import 'package:feh_rebuilder/pages/heroDetail/widgets/picker.dart';
 import 'package:feh_rebuilder/pages/home/widgets/backup_dialog.dart';
@@ -6,6 +9,7 @@ import 'package:feh_rebuilder/pages/skillsBrowse/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import '../../../utils.dart';
 import 'others_controller.dart';
 
 class OthersPage extends GetView<OthersPageController> {
@@ -14,6 +18,7 @@ class OthersPage extends GetView<OthersPageController> {
   @override
   Widget build(BuildContext context) {
     final ScrollController scController = ScrollController();
+
     return ListView(controller: scController, children: [
       Container(
         child: Padding(
@@ -155,6 +160,63 @@ class OthersPage extends GetView<OthersPageController> {
       ListTile(
         title: Row(
           children: const [
+            Text("设备识别码"),
+            Spacer(),
+          ],
+        ),
+        onTap: () async {
+          String _deviceId = await Cloud().generateDeviceId();
+          TextEditingController controller =
+              TextEditingController(text: Cloud().deviceId ?? _deviceId);
+
+          showDialog(
+              context: context,
+              builder: (context) => SimpleDialog(
+                    children: [
+                      const Text(
+                        "这是当前使用的设备识别码（已加密）\n你可以将以前设备的识别码粘贴到下方来恢复设备权限",
+                      ),
+                      TextField(
+                        controller: controller,
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          TextButton(
+                              onPressed: () async {
+                                if (Get.find<DataService>().allowGetId) {
+                                  await Cloud().restoreDevice(
+                                      controller.text.replaceAll(" ", ""));
+                                  // Utils.showToast("成功");
+                                  Navigator.of(context).pop();
+                                } else {
+                                  Utils.showToast("请先到“其他”页面打开信息服务开关");
+                                }
+                              },
+                              child: const Text("设置")),
+                          TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text("取消")),
+                        ],
+                      )
+                    ],
+                  ));
+        },
+      ),
+      ListTile(
+        title: Row(
+          children: const [
+            Text("信息服务"),
+            Spacer(),
+            _AllowGetId(),
+          ],
+        ),
+      ),
+      ListTile(
+        title: Row(
+          children: const [
             Text("开源许可"),
             Spacer(),
           ],
@@ -166,5 +228,58 @@ class OthersPage extends GetView<OthersPageController> {
         },
       ),
     ]);
+  }
+}
+
+class _AllowGetId extends StatefulWidget {
+  const _AllowGetId({Key? key}) : super(key: key);
+
+  @override
+  __AllowGetIdState createState() => __AllowGetIdState();
+}
+
+class __AllowGetIdState extends State<_AllowGetId> {
+  @override
+  Widget build(BuildContext context) {
+    return Switch(
+        value: Get.find<DataService>().allowGetId,
+        onChanged: (bool newState) async {
+          if (!Get.find<DataService>().allowGetId) {
+            bool? confirm = await showDialog(
+                context: context,
+                builder: (context) => SimpleDialog(
+                      title: const Text("注意"),
+                      children: [
+                        const Text(
+                            "使用信息服务会收集本机的系统识别码用作身份和权限认证，收集的信息会加密存放在数据库中，同意请选择确定"),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(true);
+                                },
+                                child: const Text("确定")),
+                            TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text("取消")),
+                          ],
+                        )
+                      ],
+                    ));
+            if (confirm == true) {
+              Get.find<DataService>().customBox.write("allowGetId", true);
+              setState(() {});
+            }
+          } else {
+            Get.find<DataService>().customBox.write("allowGetId", false);
+            if (Cloud().sp.inited) {
+              await Cloud().sp.clear();
+            }
+            setState(() {});
+          }
+        });
   }
 }

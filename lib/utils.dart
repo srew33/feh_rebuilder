@@ -521,17 +521,21 @@ class Utils {
   }
 
   static void showToast(String info) {
-    Fluttertoast.cancel();
+    if (Platform.isWindows) {
+      debug(info);
+    } else {
+      Fluttertoast.cancel();
 
-    Fluttertoast.showToast(
-      msg: info,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      timeInSecForIosWeb: 1,
-      backgroundColor: Colors.black,
-      textColor: Colors.white,
-      fontSize: 16.0,
-    );
+      Fluttertoast.showToast(
+        msg: info,
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black,
+        textColor: Colors.white,
+        fontSize: 16.0,
+      );
+    }
   }
 
   /// 比较版本号大小，a==b => null;a < b => true; a > b => false

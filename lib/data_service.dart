@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' show Locale;
 
 import 'package:archive/archive.dart';
+import 'package:cloud_db/cloud_db.dart';
+import 'package:feh_rebuilder/models/build_share/favorite_table.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/services.dart' show rootBundle, ByteData;
@@ -32,6 +35,7 @@ class DataService extends GetxService {
     "currentVersion": "",
     "dataVersion": "0",
     "favorites": <PersonBuild>[],
+    "allowGetId": false,
   };
 
   Map<String, Locale> languageDict = const {
@@ -202,5 +206,34 @@ class DataService extends GetxService {
 
     moveBox = GetStorage('moveBox', r"assets\dataBox\moveBox");
     await GetStorage.init("moveBox");
+  }
+
+  Map<String, FavoriteTable> favorites = {};
+  Map<String, String> cloudTags = {};
+
+  bool cacheRefreshed = false;
+
+  bool get allowGetId => customBox.read("allowGetId") ?? false;
+
+  Future refreshCache() async {
+    await Cloud().login();
+    var r1 = await Query(table: "favorite", queryParameters: {
+      "where": jsonEncode({"user": Cloud().currentUser.username})
+    }).doQuery();
+
+    var _favorites = r1.results.map((e) => FavoriteTable.fromJson(e)).toList();
+    _favorites.sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+
+    for (var item in _favorites) {
+      favorites.putIfAbsent(item.build!.objectId, () => item);
+    }
+    var r2 = await Query(table: "build_tags").doQuery();
+    r2.results.sort((a, b) => (a["seq"] as int).compareTo(b["seq"] as int));
+
+    for (var item in r2.results) {
+      cloudTags.putIfAbsent(item["objectId"], () => item["value"]);
+    }
+
+    cacheRefreshed = true;
   }
 }

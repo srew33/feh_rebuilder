@@ -173,7 +173,7 @@ class _ContentState extends State<_Content> {
         ListTile(
           title: (widget.appInfo.serverVersion > _dataService.appVersion)
               ? Text("APP：${widget.appInfo.alias}")
-              : Text("资源包：${widget.appInfo.alias}"),
+              : Text("资源包：${widget.assetsInfo.alias}"),
         ),
         Expanded(
           child: SingleChildScrollView(

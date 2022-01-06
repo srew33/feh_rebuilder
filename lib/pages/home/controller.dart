@@ -1,6 +1,5 @@
 import 'package:feh_rebuilder/global/enum/sort_key.dart';
 import 'package:feh_rebuilder/pages/heroDetail/widgets/picker.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

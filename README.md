@@ -6,7 +6,7 @@
 
 属性算法来源：[Feh | Fire Emblem Wiki | Fandom](https://fireemblem.fandom.com/wiki/Feh)
 
-flutter 版本：2.5.3（理论支持 2.2 到 2.5.3，但是大版本升级存在一些破环性更新，建议使用最新的版本）
+flutter 版本：2.8.1
 
 使用说明：
 
@@ -26,20 +26,9 @@ flutter 版本：2.5.3（理论支持 2.2 到 2.5.3，但是大版本升级存�
 3. 编译运行
 
 备注：
-1.github 仅作为代码开源仓库，不会随时更新 
 
-2.考虑到使用云数据库的安全问题，涉及的网络操作 api 没有公开，可以参考以下代码
-
-```dart
-class ApiService extends GetxService {
-    // eg
-    Future get(){
-        
-    }
-}
-```
-
-
+1. github 仅作为代码开源仓库，不会随时更新。
+2. 考虑到使用云数据库的安全问题，涉及的网络操作 api 没有公开.
 
 截图：
 

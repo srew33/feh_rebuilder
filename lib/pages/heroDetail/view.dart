@@ -1,6 +1,7 @@
 import 'dart:io';
+
 import 'package:feh_rebuilder/global/theme/text_theme.dart';
-import 'package:feh_rebuilder/models/personBuild/person_build.dart';
+
 import 'package:feh_rebuilder/pages/heroDetail/widgets/hero_icon.dart';
 import 'package:feh_rebuilder/global/enum/move_type.dart';
 import 'package:feh_rebuilder/global/enum/weapon_type.dart';
@@ -9,8 +10,6 @@ import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/pages/heroDetail/widgets/picker.dart';
 import 'package:feh_rebuilder/pages/heroDetail/widgets/custom_btn.dart';
-import 'package:feh_rebuilder/pages/heroDetail/widgets/share_widget.dart';
-import 'package:feh_rebuilder/pages/home/subview/favorite_controller.dart';
 import 'package:feh_rebuilder/pages/skillsBrowse/controller.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/material.dart';
@@ -57,45 +56,30 @@ class HeroDetail extends GetView<HeroDetailController> {
     return null;
   }
 
-  List<Widget> _buildActions() {
+  List<Widget> _buildActions(BuildContext context) {
     return [
-      controller.build.custom
-          ? IconButton(
-              onPressed: () {
-                PersonBuild? newBuild =
-                    controller.addToFavorite(controller.build.timeStamp);
-                if (newBuild != null) {
-                  Get.back(result: newBuild);
-                }
-              },
-              icon: const Icon(Icons.save),
-            )
-          : IconButton(
-              onPressed: () {
-                if (controller.addToFavorite() != null) {
-                  // 收藏页面没有用obx进行响应式处理，所以这里要手动刷新
-                  Get.find<FavoritePageController>().refreshData();
-                  Utils.showToast("成功");
-                }
-              },
-              icon: const Icon(
-                Icons.favorite_border,
-              ),
-            ),
-      // 导出按钮
-      IconButton(
-          onPressed: () async {
-            showDialog(
-              context: Get.context!,
-              builder: (context) => Dialog(
-                child: ShareWidget(
-                  build: controller.currentBuild,
-                  equipedStats: controller.equipStats,
-                ),
-              ),
-            );
+      PopupMenuButton(
+          onSelected: (value) async {
+            controller.click(context, value as String);
           },
-          icon: const Icon(Icons.share)),
+          itemBuilder: (context) => [
+                PopupMenuItem(
+                  child: Text(controller.build.custom ? "保存" : "收藏"),
+                  value: "save",
+                ),
+                const PopupMenuItem(
+                  child: Text("本地分享"),
+                  value: "share",
+                ),
+                const PopupMenuItem(
+                  child: Text("上传"),
+                  value: "upload",
+                ),
+                const PopupMenuItem(
+                  child: Text("网上配置"),
+                  value: "web",
+                ),
+              ]),
     ];
   }
 
@@ -676,7 +660,7 @@ class HeroDetail extends GetView<HeroDetailController> {
                       if (controller.heroSkills[index]!.refineId != null)
                         TextSpan(
                           text: "\n" +
-                              (("MSID_H_${controller.heroSkills[index]!.refineId!.split("_")[1]}")
+                              (("MSID_H_${controller.heroSkills[index]!.refineId!.split("_").sublist(1).join("_")}")
                                       .tr)
                                   // .replaceAll("\n", "")
                                   .replaceAll(r"$a", ""),
@@ -822,7 +806,7 @@ class HeroDetail extends GetView<HeroDetailController> {
                     "  " +
                     ("MPID_" + controller.heroName).tr),
                 // 右上角按钮
-                actions: _buildActions(),
+                actions: _buildActions(context),
               ),
               body: ListView(
                 children: ListTile.divideTiles(context: context, tiles: [

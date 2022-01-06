@@ -333,7 +333,7 @@ class SkillsBrowse extends GetView<SkillsBrowseController> {
                               if (s.refineId != null)
                                 TextSpan(
                                   text: "\n" +
-                                      (("MSID_H_${s.refineId!.split("_")[1]}")
+                                      (("MSID_H_${s.refineId!.split("_").sublist(1).join("_")}")
                                               .tr)
                                           // .replaceAll("\n", "")
                                           .replaceAll(r"$a", ""),

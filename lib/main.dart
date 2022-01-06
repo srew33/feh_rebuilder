@@ -1,6 +1,9 @@
 import 'dart:io';
+import 'package:cloud_db/cloud_db.dart';
 import 'package:feh_rebuilder/api_service.dart';
 import 'package:feh_rebuilder/data_service.dart';
+import 'package:feh_rebuilder/pages/heroBuildShare/bindings.dart';
+import 'package:feh_rebuilder/pages/heroBuildShare/view.dart';
 import 'package:feh_rebuilder/pages/heroDetail/bindings.dart';
 import 'package:feh_rebuilder/pages/home/bindings.dart';
 import 'package:feh_rebuilder/pages/home/view.dart';
@@ -10,7 +13,6 @@ import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
@@ -38,6 +40,9 @@ void main() async {
   await Utils.cleanCache(Directory(p.join(tempDir.path, "file_picker")));
 
   await initServices(appDir, tempDir);
+
+  // 网络服务初始化，
+  Cloud().init((err) => Utils.showToast(err.error.toString()));
 
   runApp(const MyApp());
 }
@@ -67,6 +72,11 @@ List<GetPage> pages = [
     name: "/skillsBrowse",
     page: () => const SkillsBrowse(),
     binding: SkillsBrowseBindings(),
+  ),
+  GetPage(
+    name: "/heroBuildShare",
+    page: () => const HeroBuildSharePage(),
+    binding: HeroBuildShareBinding(),
   ),
 ];
 

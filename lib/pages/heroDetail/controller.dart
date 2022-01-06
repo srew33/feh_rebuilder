@@ -1,14 +1,21 @@
+import 'package:cloud_db/cloud_db.dart';
 import 'package:feh_rebuilder/data_service.dart';
+import 'package:feh_rebuilder/models/build_share/build_table.dart';
+
 import 'package:feh_rebuilder/models/person/skills.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/person/stats.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/pages/heroDetail/widgets/custom_btn.dart';
+import 'package:feh_rebuilder/pages/heroDetail/widgets/tag_choose_body.dart';
+import 'package:feh_rebuilder/pages/home/subview/favorite_controller.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:math' as m;
+
+import 'widgets/share_widget.dart';
 
 class HeroDetailController extends GetxController {
   /// [person hero ,list<skill?> heroSkills ,List<Map<Skill, Skill>> weaponRefine]
@@ -93,8 +100,8 @@ class HeroDetailController extends GetxController {
   }
 
   int get bst {
-    Stats stats = Stats.fromJson(
-        Utils.calcStats(hero, 1, 40, rarity, advantage, disadvantage));
+    Stats stats = Stats.fromJson(Utils.calcStats(
+        hero, 1, 40, rarity, advantage, disadvantage, merged > 0 ? 1 : 0));
 
     // 从传承效果、A技能、和白值中计算最高的一个值，突破大于0时白值+3
     // 计算0破性格时已经计算过性格对白值的影响(一般会+-3，优劣性格会+-4，因此总白值相对中性
@@ -114,7 +121,8 @@ class HeroDetailController extends GetxController {
                       ? heroSkills[3]!.skillParams!.atk
                       : heroSkills[3]!.skillParams!.hp
                   : heroSkills[3]!.skillParams!.hp,
-      merged > 0 ? stats.sum + 3 : stats.sum
+      // 如果突破数大于0，则数值-2（去掉1破时奖励的不计算bst的2点白值）
+      merged > 0 ? stats.sum - 2 : stats.sum
     ].reduce((value, element) => m.max(value, element));
   }
 
@@ -314,6 +322,116 @@ class HeroDetailController extends GetxController {
     update();
   }
 
+  Future click(BuildContext context, String action) async {
+    switch (action) {
+      case "save":
+        save();
+        break;
+      case "share":
+        await showShare(context);
+        break;
+      case "upload":
+        await upload(context);
+        break;
+      case "web":
+        toWeb(context);
+        break;
+      default:
+        break;
+    }
+  }
+
+  void save() {
+    if (build.custom) {
+      PersonBuild? newBuild = addToFavorite(build.timeStamp);
+      if (newBuild != null) {
+        Get.back(result: newBuild);
+      }
+    } else {
+      if (addToFavorite() != null) {
+        // 收藏页面没有用obx进行响应式处理，所以这里要手动刷新
+        Get.find<FavoritePageController>().refreshData();
+        Utils.showToast("成功");
+      }
+    }
+  }
+
+  void toWeb(BuildContext context) {
+    if (Get.find<DataService>().allowGetId) {
+      Navigator.of(context).pushNamed("/heroBuildShare", arguments: hero);
+    } else {
+      Utils.showToast("请先到“其他”页面打开信息服务开关");
+    }
+  }
+
+  Future upload(BuildContext context) async {
+    if (!Get.find<DataService>().allowGetId) {
+      Utils.showToast("请先到“其他”页面打开信息服务开关");
+      return;
+    }
+    await Cloud().login();
+    if (!data.cacheRefreshed) {
+      await data.refreshCache();
+    }
+
+    List<String>? tags = await showDialog(
+        context: context,
+        builder: (context) {
+          GlobalKey<TagChooseState> s = GlobalKey();
+          return SimpleDialog(
+            title: const Text("添加标签"),
+            children: [
+              TagChoose(key: s, data: data.cloudTags),
+              const Divider(
+                height: 10,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(s.currentState!.selected);
+                      },
+                      child: const Text("确定")),
+                  TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text("取消")),
+                ],
+              )
+            ],
+          );
+        });
+    if (tags == null) {
+      return;
+    }
+
+    PersonBuild _ = PersonBuild(
+        personTag: hero.idTag!,
+        equipSkills: [for (Skill? skill in heroSkills) skill?.idTag])
+      ..merged = merged
+      ..advantage = advantage
+      ..disAdvantage = disadvantage
+      ..rarity = rarity
+      ..dragonflowers = dragonFlower
+      ..summonerSupport = isSummonerSupport
+      ..arenaScore = arenaScore
+      ..custom = true
+      ..ascendedAsset = ascendedAsset.value
+      ..timeStamp = DateTime.now().millisecondsSinceEpoch
+      ..resplendent = isResplendent;
+
+    await HeroBuildTable(
+      idTag: hero.idTag,
+      tags: BArray(op: BArrayMethod.addUnique, objects: tags),
+      creator: Cloud().currentUser.username,
+      build: Utils.encodeBuild(_, heroSkills.sublist(0, 8), hero),
+    ).create();
+
+    Utils.showToast("成功");
+  }
+
   ///添加进收藏 [timeStamp] 是毫秒时间戳，为0代表新增，否则会检索指定的数据修改
   PersonBuild? addToFavorite([int timeStamp = 0]) {
     try {
@@ -365,6 +483,18 @@ class HeroDetailController extends GetxController {
       ..arenaScore = arenaScore
       ..ascendedAsset = ascendedAsset.value
       ..resplendent = isResplendent;
+  }
+
+  Future<void> showShare(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: ShareWidget(
+          build: currentBuild,
+          equipedStats: equipStats,
+        ),
+      ),
+    );
   }
 
   HeroDetailController();

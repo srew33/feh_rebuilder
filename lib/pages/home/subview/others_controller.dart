@@ -60,7 +60,7 @@ class OthersPageController extends GetxController {
           "where": jsonEncode(
             {
               "minimal_version": {
-                r"$gte": GetPlatform.isDesktop ? 13 : data.appVersion
+                r"$lte": GetPlatform.isDesktop ? 14 : data.appVersion
               },
             },
           )
