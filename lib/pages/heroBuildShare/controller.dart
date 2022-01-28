@@ -166,21 +166,42 @@ class HeroBuild {
             ? null
             : Skill.fromJson(Get.find<DataService>().skillBox.read(item))
     ];
+    Stats skillsStats = Stats(hp: 0, atk: 0, spd: 0, def: 0, res: 0);
+    for (var _skill in skills) {
+      if (_skill != null) {
+        skillsStats.add(_skill.stats);
+        // 目前仅对武器炼成后的技能需要考虑添加额外技能的属性，除武器外其他类型的技能暂不考虑
+        if (_skill.category == 0) {
+          skillsStats.atk += _skill.might!;
+          if (_skill.refineId != null) {
+            Skill _refine = Skill.fromJson(
+                Get.find<DataService>().skillBox.read(_skill.refineId!));
+            skillsStats.add(_refine.stats);
+          }
+        }
+      }
+    }
+
+    Stats _stats = Stats.fromJson(Utils.calcStats(
+      person,
+      1,
+      40,
+      build.rarity,
+      build.advantage,
+      build.disAdvantage,
+      build.merged,
+      build.dragonflowers,
+      build.resplendent,
+      build.summonerSupport,
+      build.ascendedAsset,
+    ));
+    // 合并人物属性和装备属性
+    _stats.add(skillsStats);
+
+    // ! 加入技能属性
     return HeroBuild(
         personBuild: build,
-        stats: Stats.fromJson(Utils.calcStats(
-          person,
-          1,
-          40,
-          build.rarity,
-          build.advantage,
-          build.disAdvantage,
-          build.merged,
-          build.dragonflowers,
-          build.resplendent,
-          build.summonerSupport,
-          build.ascendedAsset,
-        )),
+        stats: _stats,
         skills: skills,
         tableData: tableData,
         person: person);

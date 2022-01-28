@@ -370,7 +370,9 @@ class _SkillTile extends StatelessWidget {
           Get.find<DataService>().appPath.path,
           category == 15
               ? "assets/blessing/${skill!.iconId}.webp"
-              : "assets/icons/${skill!.iconId}.webp");
+              : category < 3
+                  ? "assets/icons/${category + 1}.webp"
+                  : "assets/icons/${skill!.iconId}.webp");
     }
   }
 

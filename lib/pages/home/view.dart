@@ -133,6 +133,8 @@ class Home extends GetView<HomeController> {
             controller.homePageController.doFilter();
           } else {
             controller.homePageController.cacheSelectedFilter.clear();
+            controller.homePageController.cacheSelectedFilter
+                .addAll(controller.homePageController.selectedFilter);
           }
         }
       },

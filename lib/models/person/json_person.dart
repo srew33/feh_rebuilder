@@ -13,6 +13,7 @@ class JsonPerson {
   Dragonflowers? dragonflowers;
   String? timestamp;
   int? idNum;
+  int? versionNum;
   int? sortValue;
   int? origins;
   int? weaponType;
@@ -38,6 +39,7 @@ class JsonPerson {
     this.dragonflowers,
     this.timestamp,
     this.idNum,
+    this.versionNum,
     this.sortValue,
     this.origins,
     this.weaponType,
@@ -67,6 +69,7 @@ class JsonPerson {
                 json['dragonflowers'] as Map<String, dynamic>),
         timestamp: json['timestamp'] as String?,
         idNum: json['id_num'] as int?,
+        versionNum: json['version_num'] as int?,
         sortValue: json['sort_value'] as int?,
         origins: json['origins'] as int?,
         weaponType: json['weapon_type'] as int?,
@@ -96,6 +99,7 @@ class JsonPerson {
         'dragonflowers': dragonflowers?.toJson(),
         'timestamp': timestamp,
         'id_num': idNum,
+        'version_num': versionNum,
         'sort_value': sortValue,
         'origins': origins,
         'weapon_type': weaponType,

@@ -1,5 +1,6 @@
 import 'package:feh_rebuilder/global/enum/move_type.dart';
 import 'package:feh_rebuilder/global/enum/series.dart';
+import 'package:feh_rebuilder/global/enum/game_version.dart';
 import 'package:feh_rebuilder/global/enum/weapon_type.dart';
 import 'package:feh_rebuilder/global/filters/filter.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
@@ -20,6 +21,7 @@ enum PersonFilterType {
   weaponType,
   series,
   recentlyUpdated,
+  gameVersion,
 }
 
 class PersonFilter implements Filter<Person, PersonFilterType> {
@@ -94,6 +96,10 @@ class PersonFilter implements Filter<Person, PersonFilterType> {
             _legendaryKind.contains(person.legendary?.element);
       case PersonFilterType.recentlyUpdated:
         return person.recentlyUpdate;
+      case PersonFilterType.gameVersion:
+        Set<int> _valid =
+            (valid as Set<GameVersion>).map((e) => e.index + 1).toSet();
+        return _valid.contains((person.versionNum! / 100).floor());
       default:
         throw "错误的过滤类型";
     }

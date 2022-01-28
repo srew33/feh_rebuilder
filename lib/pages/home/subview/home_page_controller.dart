@@ -5,6 +5,7 @@ import 'package:feh_rebuilder/global/enum/move_type.dart';
 import 'package:feh_rebuilder/global/enum/series.dart';
 import 'package:feh_rebuilder/global/enum/sort_key.dart';
 import 'package:feh_rebuilder/global/enum/stats.dart';
+import 'package:feh_rebuilder/global/enum/game_version.dart';
 import 'package:feh_rebuilder/global/enum/weapon_type.dart';
 import 'package:feh_rebuilder/global/filterChain/filter_chain.dart';
 import 'package:feh_rebuilder/global/filters/person.dart';
@@ -45,6 +46,7 @@ class HomePageController extends GetxController {
     Set<MoveTypeEnum> _move = {};
     Set<WeaponTypeEnum> _weapon = {};
     Set<SeriesEnum> _series = {};
+    Set<GameVersion> _gameVersion = {};
     for (var item in selectedFilter) {
       switch (item.runtimeType) {
         case PersonFilterType:
@@ -58,6 +60,9 @@ class HomePageController extends GetxController {
           break;
         case SeriesEnum:
           _series.add(item);
+          break;
+        case GameVersion:
+          _gameVersion.add(item);
           break;
         default:
           break;
@@ -73,6 +78,10 @@ class HomePageController extends GetxController {
     if (_series.isNotEmpty) {
       r.add(PersonFilter(filterType: PersonFilterType.series, valid: _series));
     }
+    if (_gameVersion.isNotEmpty) {
+      r.add(PersonFilter(
+          filterType: PersonFilterType.gameVersion, valid: _gameVersion));
+    }
     return r;
   }
 
@@ -80,9 +89,7 @@ class HomePageController extends GetxController {
   final cacheSelectedFilter = RxSet();
 
   bool isSelected(dynamic val) {
-    return selectedFilter.contains(val) || cacheSelectedFilter.contains(val)
-        ? true
-        : false;
+    return cacheSelectedFilter.contains(val);
   }
 
   ///是否确定执行过滤的flag，false的话关闭drawer不会执行
@@ -90,6 +97,7 @@ class HomePageController extends GetxController {
 
   void doFilter() {
     // 过滤链合并
+    selectedFilter.clear();
     selectedFilter.addAll(cacheSelectedFilter);
 
     //生成过滤链，执行过滤和排序
@@ -113,6 +121,7 @@ class HomePageController extends GetxController {
 
     //清空缓存
     cacheSelectedFilter.clear();
+    cacheSelectedFilter.addAll(selectedFilter);
     doFilterFlag = false;
   }
 
@@ -257,6 +266,19 @@ class HomePageController extends GetxController {
           }
         }
         break;
+      case SortKey.versionNum:
+        _sortedByVersion(_all);
+        grouped.clear();
+        for (var person in _all) {
+          String key = (person.versionNum! / 100).floor().toString();
+          if (!grouped.containsKey(key)) {
+            grouped.addAll({
+              key: [person]
+            });
+          } else {
+            grouped[key]!.add(person);
+          }
+        }
     }
   }
 
@@ -331,6 +353,15 @@ class HomePageController extends GetxController {
         });
         break;
     }
+  }
+
+  /// 按游戏版本排序，相同时使用idnum比较
+  void _sortedByVersion(List<Person> personList) {
+    personList.sort((Person p1, Person p2) {
+      return p2.versionNum!.compareTo(p1.versionNum!) != 0
+          ? p2.versionNum!.compareTo(p1.versionNum!)
+          : p2.idNum!.compareTo(p1.idNum!);
+    });
   }
 
   @override

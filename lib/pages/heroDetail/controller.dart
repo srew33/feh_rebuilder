@@ -285,7 +285,10 @@ class HeroDetailController extends GetxController {
 
     skillsStats.add(skill.stats, minus: true);
     skillsStats.atk -= skill.might!;
-
+    if (skill.refineId != null) {
+      Skill _ = Skill.fromJson(data.skillBox.read(skill.refineId!));
+      skillsStats.add(_.stats, minus: true);
+    }
     heroSkills[index] = null;
 
     update();
@@ -296,6 +299,10 @@ class HeroDetailController extends GetxController {
     if (skill != null) {
       skillsStats.add(skill.stats);
       skillsStats.atk += skill.might!;
+      if (skill.refineId != null) {
+        Skill _ = Skill.fromJson(data.skillBox.read(skill.refineId!));
+        skillsStats.add(_.stats);
+      }
     }
     equipStats.add(skillsStats);
     update();
@@ -539,6 +546,10 @@ class HeroDetailController extends GetxController {
         if (s != null) {
           skillsStats.atk += s.might!;
           skillsStats.add(s.stats);
+          if (s.refineId != null && s.category == 0) {
+            Skill _s = Skill.fromJson(data.skillBox.read(s.refineId!));
+            skillsStats.add(_s.stats);
+          }
           // tempStats.add(skillStats);
         }
       }

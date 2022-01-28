@@ -21,6 +21,7 @@ class HomePage extends GetView<HomePageController> {
         itemBuilder: (context, person) => MyTile(
           path: controller.data.appPath.path,
           person: person,
+          showVersion: controller.currentSortKey == SortKey.versionNum,
           sum: controller.currentSortKey == SortKey.bst
               ? person.bst.toString()
               : person.defaultStats!.sum.toString(),
@@ -35,12 +36,17 @@ class HomePage extends GetView<HomePageController> {
 }
 
 class MyTile extends StatelessWidget {
-  const MyTile(
-      {Key? key, required this.path, required this.person, required this.sum})
-      : super(key: key);
+  const MyTile({
+    Key? key,
+    required this.path,
+    required this.person,
+    required this.sum,
+    required this.showVersion,
+  }) : super(key: key);
   final String path;
   final Person person;
   final String sum;
+  final bool showVersion;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +82,18 @@ class MyTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text(("M${person.idTag!}").tr),
+                  Row(
+                    children: [
+                      Text(("M${person.idTag!}").tr),
+                      // const Spacer(),
+                      if (showVersion)
+                        Text(
+                            " [${(person.versionNum! / 100).floor()}.${person.versionNum! % 100}]"),
+                      const SizedBox(
+                        width: 40,
+                      )
+                    ],
+                  ),
                   Row(
                     children: [
                       MyTile1(path: path, person: person),

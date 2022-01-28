@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:feh_rebuilder/global/enum/move_type.dart';
 import 'package:feh_rebuilder/global/enum/series.dart';
+import 'package:feh_rebuilder/global/enum/game_version.dart';
 import 'package:feh_rebuilder/global/enum/weapon_type.dart';
 import 'package:feh_rebuilder/global/filters/person.dart';
 import 'package:feh_rebuilder/models/weapon_type/weapon_type.dart';
@@ -60,8 +61,6 @@ class FilterDraw extends GetView<HomePageController> {
                                       controller.cacheSelectedFilter
                                           .add(MoveTypeEnum.values[i]);
                                     } else {
-                                      controller.selectedFilter
-                                          .remove(MoveTypeEnum.values[i]);
                                       controller.cacheSelectedFilter
                                           .remove(MoveTypeEnum.values[i]);
                                     }
@@ -105,8 +104,6 @@ class FilterDraw extends GetView<HomePageController> {
                                       controller.cacheSelectedFilter
                                           .add(WeaponTypeEnum.values[w.index]);
                                     } else {
-                                      controller.selectedFilter.remove(
-                                          WeaponTypeEnum.values[w.index]);
                                       controller.cacheSelectedFilter.remove(
                                           WeaponTypeEnum.values[w.index]);
                                     }
@@ -127,8 +124,6 @@ class FilterDraw extends GetView<HomePageController> {
                                   .add(PersonFilterType.recentlyUpdated);
                             } else {
                               controller.cacheSelectedFilter
-                                  .remove(PersonFilterType.recentlyUpdated);
-                              controller.selectedFilter
                                   .remove(PersonFilterType.recentlyUpdated);
                             }
                           },
@@ -156,8 +151,6 @@ class FilterDraw extends GetView<HomePageController> {
                                         } else {
                                           controller.cacheSelectedFilter.remove(
                                               PersonFilterType.isResplendent);
-                                          controller.selectedFilter.remove(
-                                              PersonFilterType.isResplendent);
                                         }
                                       },
                                     )),
@@ -171,8 +164,6 @@ class FilterDraw extends GetView<HomePageController> {
                                               PersonFilterType.isRefersher);
                                         } else {
                                           controller.cacheSelectedFilter.remove(
-                                              PersonFilterType.isRefersher);
-                                          controller.selectedFilter.remove(
                                               PersonFilterType.isRefersher);
                                         }
                                       },
@@ -188,8 +179,6 @@ class FilterDraw extends GetView<HomePageController> {
                                         } else {
                                           controller.cacheSelectedFilter
                                               .remove(PersonFilterType.isDuo);
-                                          controller.selectedFilter
-                                              .remove(PersonFilterType.isDuo);
                                         }
                                       },
                                     )),
@@ -202,8 +191,6 @@ class FilterDraw extends GetView<HomePageController> {
                                           controller.cacheSelectedFilter
                                               .add(PersonFilterType.isHarmonic);
                                         } else {
-                                          controller.selectedFilter.remove(
-                                              PersonFilterType.isHarmonic);
                                           controller.cacheSelectedFilter.remove(
                                               PersonFilterType.isHarmonic);
                                         }
@@ -220,8 +207,6 @@ class FilterDraw extends GetView<HomePageController> {
                                         } else {
                                           controller.cacheSelectedFilter.remove(
                                               PersonFilterType.isMythic);
-                                          controller.selectedFilter.remove(
-                                              PersonFilterType.isMythic);
                                         }
                                       },
                                     )),
@@ -234,8 +219,6 @@ class FilterDraw extends GetView<HomePageController> {
                                           controller.cacheSelectedFilter
                                               .add(PersonFilterType.isLegend);
                                         } else {
-                                          controller.selectedFilter.remove(
-                                              PersonFilterType.isLegend);
                                           controller.cacheSelectedFilter.remove(
                                               PersonFilterType.isLegend);
                                         }
@@ -272,11 +255,37 @@ class FilterDraw extends GetView<HomePageController> {
                                             } else {
                                               controller.cacheSelectedFilter
                                                   .remove(SeriesEnum.values[i]);
-                                              controller.selectedFilter
-                                                  .remove(SeriesEnum.values[i]);
                                             }
                                           },
                                         ),
+                                      )),
+                              ],
+                            ),
+                          ),
+                          const ListTile(
+                            title: Text("版本"),
+                          ),
+                          ListTile(
+                            title: Wrap(
+                              runSpacing: 10,
+                              spacing: 10,
+                              children: [
+                                for (int i = 0;
+                                    i < GameVersion.values.length;
+                                    i++)
+                                  Obx(() => ChoiceChip(
+                                        label: Text("${i + 1}"),
+                                        selected: controller
+                                            .isSelected(GameVersion.values[i]),
+                                        onSelected: (bool val) {
+                                          if (val) {
+                                            controller.cacheSelectedFilter
+                                                .add(GameVersion.values[i]);
+                                          } else {
+                                            controller.cacheSelectedFilter
+                                                .remove(GameVersion.values[i]);
+                                          }
+                                        },
                                       )),
                               ],
                             ),

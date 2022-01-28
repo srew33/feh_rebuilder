@@ -8,6 +8,7 @@ enum SortKey {
   spd,
   def,
   res,
+  versionNum,
 }
 
 extension SortKeyExtension on SortKey {
@@ -31,6 +32,8 @@ extension SortKeyExtension on SortKey {
         return "CUSTOM_STATS_DEF";
       case SortKey.res:
         return "CUSTOM_STATS_RES";
+      case SortKey.versionNum:
+        return "版本";
     }
   }
 }
