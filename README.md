@@ -1,4 +1,4 @@
-采用 flutter 复刻的 Fire Emblem Heroes 游戏数据查询工具 Builder for FEH ，发布于https://bbs.nga.cn/read.php?tid=28206759
+采用 flutter 复刻的 Fire Emblem Heroes 游戏数据查询工具 Builder for FEH ，发布于[https://bbs.nga.cn/read.php?tid=28206759](https://bbs.nga.cn/read.php?tid=28206759https://bbs.nga.cn/read.php?tid=28206759)
 
 数据来源：[GitHub - HertzDevil/feh-assets-json: JSON dumps of Fire Emblem Heroes asset files](https://github.com/HertzDevil/feh-assets-json)
 
@@ -6,29 +6,30 @@
 
 属性算法来源：[Feh | Fire Emblem Wiki | Fandom](https://fireemblem.fandom.com/wiki/Feh)
 
-flutter 版本：2.8.1
+flutter 版本：一般使用最新版本
 
 使用说明：
 
 安装配置 flutter
 
-**PC 端**
-
-1. 解压 assets/assets.zip 到 assets/
-2. 自行生成一对 RSA 密钥，公钥放在 assets\update.pub，开发必须，仅运行的话生成一个空文件即可
-3. flutter pub get
-4. 编译运行
-
-**安卓端**
+**PC 端&&安卓端**
 
 1. 自行生成一对 RSA 密钥，公钥放在 assets\update.pub，开发必须，仅运行的话生成一个空文件即可
 2. flutter pub get
-3. 编译运行
+3. PC端需要将[sqlite3.dll](https://github.com/tekartik/sqflite/raw/master/sqflite_common_ffi/lib/src/windows/sqlite3.dll)放到exe的同一文件夹中，参考[sqflite_common_ffi | Dart Package (flutter-io.cn)](https://pub.flutter-io.cn/packages/sqflite_common_ffi)的说明
+4. 编译运行
+
+**Web端**
+
+1. flutter pub get
+2. 编译运行
+
+**[项目结构](STRUCTURE.md)**
 
 备注：
 
 1. github 仅作为代码开源仓库，不会随时更新。
-2. 考虑到使用云数据库的安全问题，涉及的网络操作 api 没有公开.
+2. 考虑到安全，网络操作的具体实现没有开源，使用时请注释有关代码。
 
 截图：
 

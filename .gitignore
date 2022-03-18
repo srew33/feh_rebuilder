@@ -45,16 +45,21 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-assets/*
-!assets/static/
-!assets/assets.zip
-# !assets/db
-# !assets/update.pub
-lib/bmob.dart
-lib/api_service.dart
+assets/db/
 
+
+out/*
 windows/
 
 .metadata
 analysis_options.yaml
 models.jsonc
+
+
+feh.db
+user.db
+assets/update.pub
+web/*
+start_assets.py
+start_server.py
+test/

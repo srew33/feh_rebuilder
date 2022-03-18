@@ -6,11 +6,11 @@ class Stats {
   int res;
 
   Stats({
-    required this.hp,
-    required this.atk,
-    required this.spd,
-    required this.def,
-    required this.res,
+    this.hp = 0,
+    this.atk = 0,
+    this.spd = 0,
+    this.def = 0,
+    this.res = 0,
   });
 
   factory Stats.fromJson(Map<String, dynamic> json) => Stats(
@@ -71,6 +71,7 @@ class Stats {
     } else if (val is Map) {
       add(Stats.fromJson(Map<String, int>.from(val)), minus: minus);
       // result = Stats.fromJson(Map<String, int>.from(val));
+    } else if (val == null) {
     } else {
       throw "传入的类型需要是Stats或Map<String, int>，你传入的是${val.runtimeType}";
     }

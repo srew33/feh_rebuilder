@@ -1,21 +1,29 @@
-class PersonBuild {
-  String personTag;
-  String? advantage;
-  String? disAdvantage;
-  int rarity;
-  int merged;
-  int dragonflowers;
-  bool resplendent;
-  bool summonerSupport;
-  List<String?> equipSkills;
-  int arenaScore;
-  int timeStamp;
-  bool custom;
-  String? ascendedAsset;
-  String tag;
-  String remark;
+import 'package:equatable/equatable.dart';
 
-  PersonBuild({
+class PersonBuild extends Equatable {
+  final String personTag;
+  final String? advantage;
+  final String? disAdvantage;
+  final int rarity;
+  final int merged;
+  final int dragonflowers;
+  final bool resplendent;
+  final bool summonerSupport;
+  final List<String?> equipSkills;
+
+  /// 竞技场分数，弃用
+  final int arenaScore;
+
+  /// 弃用
+  final int timeStamp;
+
+  /// 弃用
+  final bool custom;
+  final String? ascendedAsset;
+  final String tag;
+  final String remark;
+
+  const PersonBuild({
     required this.personTag,
     this.advantage,
     this.disAdvantage,
@@ -68,4 +76,21 @@ class PersonBuild {
         'tag': tag,
         'remark': remark,
       };
+
+  @override
+  List<Object?> get props {
+    return [
+      personTag,
+      advantage,
+      disAdvantage,
+      rarity,
+      merged,
+      dragonflowers,
+      resplendent,
+      summonerSupport,
+      equipSkills,
+      ascendedAsset,
+      tag,
+    ];
+  }
 }

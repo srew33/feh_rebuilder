@@ -1,29 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:archive/archive.dart';
+
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
-import 'package:feh_rebuilder/data_service.dart';
-
+import 'package:feh_rebuilder/env_provider.dart';
+import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
-import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:feh_rebuilder/models/skill/skill.dart';
+import 'package:feh_rebuilder/repositories/data_table.dart';
+import 'package:feh_rebuilder/repositories/repository.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:hashids2/hashids2.dart';
 import 'package:path/path.dart' as p;
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:pointycastle/export.dart'
     hide Signer
     hide RSASigner
     hide Padding;
-
-import 'package:feh_rebuilder/models/person/person.dart';
-
-import 'package:feh_rebuilder/models/skill/skill.dart';
-
-import 'package:flutter/foundation.dart';
-
-import 'package:get_storage/get_storage.dart';
 
 class Utils {
   static const List<String> statKeys = [
@@ -112,43 +107,51 @@ class Utils {
       "res": 0,
     };
 
-    // 计算X星属性逻辑为以3星为基础，1/5星直接-1/+1，2/4星在1/3星基础上取最大的前两个数值+1，
-    // 获得降序后的属性字典，如果多个属性相同，取key顺序在前的+1
-    Map<String, int> sortedStats = _sortStats(base_stats);
+    // 获得降序后的属性字典，数值相同时key按key列表的升序
+    // 这里假定了base_stats一定是按顺序排列的
+    var sortedStats = base_stats.entries.toList();
+    sortedStats.sort((a, b) {
+      return a.value != b.value ? b.value.compareTo(a.value) : -1;
+    });
 
+    // 计算X星属性逻辑为以3星为基础，1/5星直接-1/+1
+    // 4星在3星基础上取除了hp外最高的两个+1，
+    // 2星在3星基础上将HP和最低的两项-1
     switch (rarity) {
       case 1:
-        deltaStats.forEach((key, value) {
-          deltaStats[key] = deltaStats[key]! - 1;
-        });
+        deltaStats.updateAll((key, value) => value - 1);
         break;
       case 2:
-        base_stats.forEach((key, value) {
-          deltaStats[key] = deltaStats[key]! - 1;
-        });
-        Map<String, int> _ = Map.from(sortedStats);
-        //  取除了hp外最高的两个+1
-        _.remove("hp");
-        for (int i = 0; i < 2; i++) {
-          deltaStats[_.keys.elementAt(i)] =
-              deltaStats[_.keys.elementAt(i)]! + 1;
+        // HP及最低的两项-1
+        deltaStats.update("hp", (value) => value - 1);
+        int flag = 0;
+        for (var entry in sortedStats.reversed) {
+          if (entry.key != "hp") {
+            deltaStats.update(entry.key, (value) => value - 1);
+            flag++;
+          }
+          if (flag >= 2) {
+            break;
+          }
         }
         break;
       case 3:
         break;
       case 4:
-        Map<String, int> _ = Map.from(sortedStats);
         //  取除了hp外最高的两个+1
-        _.remove("hp");
-        for (int i = 0; i < 2; i++) {
-          deltaStats[_.keys.elementAt(i)] =
-              deltaStats[_.keys.elementAt(i)]! + 1;
+        int flag = 0;
+        for (var entry in sortedStats) {
+          if (entry.key != "hp") {
+            deltaStats.update(entry.key, (value) => value + 1);
+            flag++;
+          }
+          if (flag >= 2) {
+            break;
+          }
         }
         break;
       case 5:
-        deltaStats.forEach((key, value) {
-          deltaStats[key] = deltaStats[key]! + 1;
-        });
+        deltaStats.updateAll((key, value) => value + 1);
         break;
     }
 
@@ -162,37 +165,28 @@ class Utils {
     }
 
     // --------------------------------------------------神龙之花-----------------------
+    // 按照降序的属性列表按顺序+1
     // 计算+1到+4,大于5的部分下面计算
     if (dragonflowers > 0) {
       for (var i = 0; i < dragonflowers % 5; i++) {
-        deltaStats[sortedStats.keys.elementAt(i)] =
-            deltaStats[sortedStats.keys.elementAt(i)]! + 1;
+        deltaStats.update(sortedStats[i].key, (value) => value + 1);
       }
     }
 
     // 如果dragonflowers大于等于5， 每+5则五维再+1
     if (dragonflowers >= 5) {
-      deltaStats.forEach((key, value) {
-        deltaStats[key] = deltaStats[key]! + 1 * (dragonflowers / 5).truncate();
-      });
+      deltaStats.updateAll(
+          (key, value) => value + 1 * (dragonflowers / 5).truncate());
     }
     // --------------------------------------------------召唤师的羁绊-----------------------
     // HP+5 四维+2
     if (summonerSupport) {
-      deltaStats.forEach((key, value) {
-        if (key == "hp") {
-          deltaStats[key] = deltaStats[key]! + 5;
-        } else {
-          deltaStats[key] = deltaStats[key]! + 2;
-        }
-      });
+      deltaStats.updateAll((key, value) => key == "hp" ? value + 5 : value + 2);
     }
     // --------------------------------------------------神装英雄-----------------------
     // 五维+2
     if (resplendent) {
-      deltaStats.forEach((key, value) {
-        deltaStats[key] = deltaStats[key]! + 2;
-      });
+      deltaStats.updateAll((key, value) => value + 2);
     }
 
     //--------------------------------------------------突破---------------------------
@@ -201,11 +195,10 @@ class Utils {
     if (merged > 0) {
       if (advantage == null && disadvantage == null) {
         // 中性，去除掉开花属性
-        List<String> _ = sortedStats.keys.toList();
-        _.remove(ascendedAsset);
-
-        for (int i = 0; i < 3; i++) {
-          deltaStats[_[i]] = deltaStats[_[i]]! + 1;
+        var withoutAscendedAsset = sortedStats.map((e) => e.key).toList();
+        withoutAscendedAsset.removeWhere((element) => element == ascendedAsset);
+        for (var i = 0; i < 3; i++) {
+          deltaStats.update(withoutAscendedAsset[i], (value) => value + 1);
         }
       } else {
         assert(advantage != disadvantage);
@@ -217,18 +210,13 @@ class Utils {
     }
     // 从+1到+5循环,大于5的部分下面计算
     for (int i = 0; i < merged % 5; i++) {
-      List<int> toDo = [(i * 2) % 5, (i * 2 + 1) % 5];
-      for (var index in toDo) {
-        deltaStats[sortedStats.keys.elementAt(index)] =
-            deltaStats[sortedStats.keys.elementAt(index)]! + 1;
-      }
+      deltaStats.update(sortedStats[(i * 2) % 5].key, (value) => value + 1);
+      deltaStats.update(sortedStats[(i * 2 + 1) % 5].key, (value) => value + 1);
     }
 
-    // 如果merge大于等于5， 每+5则五维再+2
+    // 如果突破大于等于5， 每+5则五维再+2
     if (merged >= 5) {
-      deltaStats.forEach((key, value) {
-        deltaStats[key] = deltaStats[key]! + 2 * (merged / 5).truncate();
-      });
+      deltaStats.updateAll((key, value) => value + 2 * (merged / 5).truncate());
     }
     // 测试用
     if (kDebugMode) {
@@ -287,77 +275,64 @@ class Utils {
     return result;
   }
 
-  ///降序排列属性值，数值相同时key按key列表的升序
-  static Map<String, int> _sortStats(Map<String, int> stats) {
-    List<String> _result = [];
-    List<String> keys = List.from(stats.keys);
+  // 降序排列属性值，数值相同时key按key列表的升序
+  // static Map<String, int> _sortStats(Map<String, int> stats) {
+  // List<String> _result = [];
+  // List<String> keys = List.from(stats.keys);
 
-    List<int> values = List.from(stats.values);
+  // List<int> values = List.from(stats.values);
 
-    // 降序排列
-    values.sort((int a, int b) => b.compareTo(a));
+  // // 降序排列
+  // values.sort((int a, int b) => b.compareTo(a));
 
-    values.asMap().forEach((index, value) {
-      // 按 "hp","atk","spd", "def","res"顺序得到第一个等于value的键名，然后加入结果中，最后删除
-      // 这个键，以免在有几个属性重复时得到同一个键名
-      String _key = keys.firstWhere((key) => stats[key] == value);
-      _result.add(_key);
-      keys.remove(_key);
-    });
-    return Map.fromIterables(_result, values);
-  }
+  // values.asMap().forEach((index, value) {
+  //   // 按 "hp","atk","spd", "def","res"顺序得到第一个等于value的键名，然后加入结果中，最后删除
+  //   // 这个键，以免在有几个属性重复时得到同一个键名
+  //   String _key = keys.firstWhere((key) => stats[key] == value);
+  //   _result.add(_key);
+  //   keys.remove(_key);
+  // });
+  // return Map.fromIterables(_result, values);
+  // }
 
-  ///通过传入的skillTag搜索所有相关的专武
-  static List<Map<Skill, Skill>> getExclusive(
-      String skillTag, GetStorage skillBox) {
-    List<Map<Skill, Skill>> result = [];
+  ///通过传入的skillTag搜索所有相关的专武1
+  ///
+  ///返回值：{专武Skill：专武效果Skill}
+  static Map<Skill, Skill?> getCanRefineWeapons(
+      String skillTag, Repository repo) {
+    Map<Skill, Skill?> result = {};
 
-    Skill exclusiveWeapon = Skill.fromJson(skillBox.read(skillTag));
-    // print(exclusiveWeapon);
-    if (exclusiveWeapon.refineList != null) {
-      for (String exclusiveWeaponIdTAG in exclusiveWeapon.refineList!) {
-        Skill w = Skill.fromJson(skillBox.read(exclusiveWeaponIdTAG));
-        if (w.refineId != null && w.refined!) {
-          // 第一把专武
-          Skill effectIdTag = Skill.fromJson(skillBox.read(w.refineId!));
-          result.add({w: effectIdTag});
-        } else if (!w.refined!) {
-          // 其他专武
-          result.addAll(getExclusive(w.idTag!, skillBox));
+    Skill exclusiveWeapon = repo.cacheSkills[skillTag]!;
+    // Skill.fromJson(await repo.get(repo.skill, skillTag) ?? {});
+    // 加入自身
+    result.addAll({exclusiveWeapon: null});
+
+    for (var s in repo.cacheSkills.values) {
+      if (s.origSkill == exclusiveWeapon.idTag) {
+        if (s.refineId != null) {
+          result.addAll({s: repo.cacheSkills[s.refineId]});
+        } else {
+          // 如果武器未被锻造，一般指第二把专武
+          result.addAll(getCanRefineWeapons(s.idTag!, repo));
         }
       }
     }
-    // print(result);
+
     return result;
   }
 
-  ///把bool，list，map等转换成json 存到数据库
-  static Map<String, dynamic> map2Db(Map<String, dynamic> dict) {
-    Map<String, dynamic> _dict = Map<String, dynamic>.from(dict);
-    for (String k in _dict.keys) {
-      if (_dict[k] is String || _dict[k] is num || _dict[k] is Uint8List) {
-      } else {
-        _dict[k] = jsonEncode(_dict[k]);
-        // print("$k -> ${_dict[k]} ");
+  static String getAssetsPath(String path) {
+    // web下的测试地址不需要"assets"，其他环境需要"assets"
+    if (kIsWeb && !kReleaseMode) {
+      if (path.startsWith("assets")) {
+        path = path.substring(7);
+      }
+    } else {
+      if (!path.startsWith("assets")) {
+        path = p.join("assets", path);
       }
     }
-    // print("convert done");
-    return _dict;
-  }
-
-  ///把JSON还原成bool，list，map等类型
-  static Map<String, dynamic> db2Map(Map<String, dynamic> dict) {
-    // 数据库结果是只读的
-    Map<String, dynamic> _dict = Map<String, dynamic>.from(dict);
-    for (String k in _dict.keys) {
-      try {
-        _dict[k] = jsonDecode(_dict[k]);
-      } catch (e) {
-        // 如果不是string类型，就不管
-      }
-    }
-    // print("convert done");
-    return _dict;
+    return path.replaceAll(r"\", "/");
   }
 
   static void debug(Object o) {
@@ -365,102 +340,29 @@ class Utils {
       // ignore: avoid_print
       print(o);
     }
-    // assert(() {
-    //   print(o);
-    //   return true;
-    // }());
   }
 
-  static Future<bool> verifySignature(String updateFilePath) async {
-    final bytes = await File(updateFilePath).readAsBytes();
-    if (bytes.length > 384) {
-      Uint8List data = bytes.sublist(0, bytes.length - 384);
-      Uint8List signature = bytes.sublist(bytes.length - 384, bytes.length);
+  static Future<bool> verifySignature(
+    Uint8List data,
+    Uint8List signature,
+  ) async {
+    String hash = md5.convert(data).toString();
 
-      String md5Hash = md5.convert(data).toString();
+    final publicKeyString = await rootBundle.loadString('assets/update.pub');
 
-      final publicKeyString = await rootBundle.loadString('assets/update.pub');
+    RSAKeyParser parser = RSAKeyParser();
 
-      RSAKeyParser parser = RSAKeyParser();
+    final signer2 = Signer(RSASigner(RSASignDigest.SHA256,
+        publicKey: parser.parse(publicKeyString) as RSAPublicKey));
 
-      final signer2 = Signer(RSASigner(RSASignDigest.SHA256,
-          publicKey: parser.parse(publicKeyString) as RSAPublicKey));
-
-      return signer2.verify(md5Hash, Encrypted(signature));
-    } else {
-      throw "错误的更新包";
-    }
-  }
-
-  ///[String updateFile, Directory tempDir]
-  ///验证签名后释放更新文件
-  static bool unzipAssets(List args) {
-    Uint8List data = File(args[0]).readAsBytesSync();
-
-    final archive = ZipDecoder().decodeBytes(data);
-
-    for (final file in archive) {
-      final filename = file.name;
-
-      if (file.isFile) {
-        final data = file.content as List<int>;
-        File(p.join(args[1].path, "update", filename))
-          ..createSync(recursive: true)
-          ..writeAsBytesSync(data);
-      } else {
-        Utils.debug(filename);
-        Directory(p.join(args[1].path, "update", filename))
-            .createSync(recursive: true);
-      }
-    }
-
-    File(p.join(args[1].path, "update", "update.flag"))
-        .createSync(recursive: true);
-
-    return true;
-  }
-
-  ///启动时检查是否存在需要更新的assets，如果有就覆盖对应文件
-  static Future<bool> updateAssets(List<Directory> args) async {
-    Directory appPath = args[0];
-    Directory tempDir = args[1];
-
-    //如果temp目录下存在"update/toUpdate.flag",那么将update下的所有文件覆盖到数据目录下的assets
-    if (await File(p.join(tempDir.path, "update", "update.flag")).exists()) {
-      Utils.debug("开始覆盖数据文件");
-      await for (FileSystemEntity fileSystemEntity
-          in Directory(p.join(tempDir.path, "update")).list(recursive: true)) {
-        if (fileSystemEntity is File) {
-          String relative = p.relative(fileSystemEntity.path,
-              from: p.join(tempDir.path, "update"));
-
-          await fileSystemEntity
-              .rename(p.join(appPath.path, "assets", relative));
-        }
-      }
-      Utils.debug("更新完成");
-    }
-
-    return true;
-  }
-
-  /// 启动时检查缓存文件夹是否存在，如果存在就清空
-  static Future<void> cleanCache(Directory tempDir) async {
-    // Directory tempDir = GetPlatform.isMobile
-    //     ? await getTemporaryDirectory()
-    //     : Directory(r"H:\GitProject\flutter\feh_heroes\feh_rebuilder\cache");
-    // 最后清空缓存文件夹，filepicker会将选择的文件缓存到这里影响下次更新，因此最好全部删除
-    if (await tempDir.exists()) {
-      await tempDir.delete(recursive: true);
-    }
+    return signer2.verify(hash, Encrypted(signature));
   }
 
   /// 自定义build转字符串
-  static String encodeBuild(
-      PersonBuild build, List<Skill?> skills, Person person) {
+  static String encodeBuild(PersonBuild build, List<int> skills, int personId) {
     List<int> all = [];
 
-    all.add(person.idNum!);
+    all.add(personId);
     all.add(
         build.advantage == null ? 9 : Utils.statKeys.indexOf(build.advantage!));
     all.add(build.disAdvantage == null
@@ -472,7 +374,7 @@ class Utils {
     all.add(build.resplendent ? 1 : 0);
     all.add(build.summonerSupport ? 1 : 0);
     all.add(build.arenaScore);
-    all.addAll([for (Skill? s in skills) s == null ? 0 : s.idNum!]);
+    all.addAll(skills);
     all.add(build.ascendedAsset == null
         ? 9
         : Utils.statKeys.indexOf(build.ascendedAsset!));
@@ -482,88 +384,41 @@ class Utils {
     return result;
   }
 
-  /// 字符串转自定义build
-  static PersonBuild? decodeBuild(String encoded, DataService data) {
-    List<int> all = HashIds().decode(encoded);
-    PersonBuild? result;
-
-    if (all.length != 18) {
-      return null;
-    }
-
-    Iterable<Map<String, dynamic>> skills =
-        (data.skillBox.getValues() as Iterable<dynamic>)
-            .cast<Map<String, dynamic>>();
-
-    String personTag = (data.personBox.getValues() as Iterable<dynamic>)
-        .cast<Map<String, dynamic>>()
-        .firstWhere((element) => element["id_num"] == all[0])["id_tag"];
-
-    List<String?> skillsTags = [
-      for (int idNum in all.sublist(9, 17))
-        idNum == 0
-            ? null
-            : skills
-                .firstWhere((element) => element["id_num"] == idNum)["id_tag"]
-    ];
-    result = PersonBuild(personTag: personTag, equipSkills: skillsTags)
-      ..advantage = all[1] == 9 ? null : statKeys[all[1]]
-      ..disAdvantage = all[2] == 9 ? null : statKeys[all[2]]
-      ..rarity = all[3]
-      ..merged = all[4]
-      ..dragonflowers = all[5]
-      ..resplendent = all[6] == 1 ? true : false
-      ..summonerSupport = all[7] == 1 ? true : false
-      ..arenaScore = all[8]
-      ..ascendedAsset = all[17] == 9 ? null : statKeys[all[17]];
-
-    return result;
-  }
-
   static void showToast(String info) {
-    if (Platform.isWindows) {
-      debug(info);
-    } else {
-      Fluttertoast.cancel();
-
-      Fluttertoast.showToast(
-        msg: info,
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black,
-        textColor: Colors.white,
-        fontSize: 16.0,
-      );
-    }
+    EasyLoading.instance
+      ..loadingStyle = EasyLoadingStyle.dark
+      ..maskType = EasyLoadingMaskType.none
+      ..toastPosition = EasyLoadingToastPosition.bottom
+      ..radius = 20;
+    EasyLoading.showToast(info);
   }
 
-  /// 比较版本号大小，a==b => null;a < b => true; a > b => false
-  // static bool? compareVersion(String a, String b) {
-  //   try {
-  //     if (a == b) {
-  //       return null;
-  //     } else {
-  //       List<String> versionA = a.split(".");
-  //       List<String> versionB = b.split(".");
-  //       for (int i = 0; i < 3; i++) {
-  //         if (int.parse(versionA[i]) > int.parse(versionB[i])) {
-  //           return false;
-  //         } else if (int.parse(versionA[i]) < int.parse(versionB[i])) {
-  //           return true;
-  //         }
-  //       }
-  //     }
-  //     return null;
-  //   } catch (e) {
-  //     showToast("版本分析出错！");
-  //   }
-  // }
+  static void showLoading([String? info]) {
+    EasyLoading.instance.maskType = EasyLoadingMaskType.black;
+    EasyLoading.instance.indicatorType = EasyLoadingIndicatorType.ring;
+    EasyLoading.show(status: info ?? '加载中...');
+  }
 
   static Future<String> getChecksum(String path) async {
     File target = File(path);
     return await target.exists()
         ? sha1.convert(await target.readAsBytes()).toString()
         : "";
+  }
+
+  static Future<void> restoreOldVersionFavs(
+      FavouritesTable favouritesTable) async {
+    File target =
+        File(p.join(EnvProvider.rootDir, "dataBox", "custom", "custom.gs"));
+    if (await target.exists()) {
+      Map<String, dynamic> data = jsonDecode(await target.readAsString());
+      List<Map<String, dynamic>> favourites =
+          (data["favorites"] as List).cast<Map<String, dynamic>>();
+      Iterable<PersonBuild> transformed =
+          favourites.map((e) => PersonBuild.fromJson(e));
+      await favouritesTable.addAll(
+          transformed.map((e) => e.timeStamp.toString()), favourites);
+      debug("恢复成功");
+    }
   }
 }

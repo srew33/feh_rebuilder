@@ -32,7 +32,16 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -41,11 +50,12 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.example.feh_rebuilder"
-        minSdkVersion 21
+        minSdkVersion 16
         targetSdkVersion 30
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
+
    signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
@@ -63,19 +73,22 @@ android {
     //    }
    }
     buildTypes {
-        // release {
-        //     if (keystorePropertiesFile.exists()) {
-        //         signingConfig signingConfigs.release
-        //         println "Signing with key.properties"
-        //     } else {
-        //         signingConfig signingConfigs.debug
-        //         println "Signing with debug keys"
-        //     }
-        // }
-        release {
+        debug {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
+            applicationIdSuffix ".debug"
             signingConfig signingConfigs.debug
+            println "Signing with debug keys"
+        }
+        release {
+            // applicationIdSuffix ".beta"
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+                println "Signing with key.properties"
+            } else {
+                signingConfig signingConfigs.debug
+                println "Signing with debug keys"
+            }
         }
     }
 }

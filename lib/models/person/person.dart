@@ -1,6 +1,5 @@
 import 'dragonflowers.dart';
 import 'growth_rates.dart';
-
 import 'json_person.dart';
 import 'legendary.dart';
 import 'skills.dart';

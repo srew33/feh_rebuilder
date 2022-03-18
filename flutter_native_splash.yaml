@@ -1,0 +1,75 @@
+flutter_native_splash:
+  color: "#ffffff"
+  android: true
+  web: true
+  image: "assets/Feh.png"
+# flutter_native_splash:
+
+# 该锯生成原生代码来自定义 Flutter 默认白色原生闪屏界面的背景色和闪屏图像。
+# 自定义下面的参数，然后在命令行终端运行下面的命令：
+# flutter pub run flutter_native_splash:create
+# 要恢复为 Flutter 默认的白色闪屏界面，运行下面的命令：
+# flutter pub run flutter_native_splash:remove
+
+# 只有 color 或 background_image 是必需的参数。使用 color 将闪屏界面的背景设置为单色。
+# 使用 background_image 可将 png 图像设置为闪屏界面的背景。该图像会被拉伸以适应应用大小。
+# color 和 background_image 不能同时设置，只有一个会被使用。
+# color: "#42a5f5"
+#background_image: "assets/background.png"
+
+# 以下是可选的参数。去掉注释前面的 #可使参数起作用。
+
+# image 参数允许你指定在闪屏界面使用的图像。它必须是 png 文件，且应该是用于4倍像素密度的大小。
+#image: assets/splash.png
+
+# 该属性允许你指定图像作为商标在闪屏界面显示。它必须是 png 文件。现在它只支持 Android 和 iOS 。
+#branding: assets/dart.png
+
+# 为黑暗模式指定商标图像
+#branding_dark: assets/dart_dark.png
+
+# 要将商标图像放置在界面底部，可以使用 bottom 、 bottomRight 和 bottomLeft 。如果未指定或者指定了其它值，使用默认值 bottom 。
+# 确保该内容模式值与 android_gravity 值 和 ios_content_mode 值不相似。
+#branding_mode: bottom
+
+# color_dark 、 background_image_dark 和 image_dark 用于设备在黑暗模式时设置背景色和图像。
+# 如果没有指定，应用会使用上面的参数。如果指定了 image_dark ，必须要指定 color_dark 或 background_image_dark 。
+# color_dark 和 background_image_dark 不能同时设置。
+#color_dark: "#042a49"
+#background_image_dark: "assets/dark-background.png"
+#image_dark: assets/splash-invert.png
+
+# android 、 ios 和 web 参数可用于不为对应的平台生成闪屏界面。
+#android: false
+#ios: false
+#web: false
+
+#  可用 android_gravity 、 android_gravity 、 ios_content_mode 和 web_image_mode 来设置闪屏图像的位置。默认是居中。
+#
+# android_gravity 可以是以下 Android Gravity 其中之一 (查看
+# https://developer.android.com/reference/android/view/Gravity): bottom 、 center 、
+# center_horizontal 、 center_vertical 、 clip_horizontal 、 clip_vertical 、
+# end 、 fill 、 fill_horizontal 、 fill_vertical 、 left 、 right 、 start 或 top 。
+#android_gravity: center
+#
+# ios_content_mode 可以是以下 iOS UIView.ContentMode 其中之一 (查看
+# https://developer.apple.com/documentation/uikit/uiview/contentmode): scaleToFill 、
+# scaleAspectFit 、 scaleAspectFill 、 center 、 top 、 bottom 、
+# left 、 right 、 topLeft 、 topRight 、 bottomLeft 或  bottomRight 。
+#ios_content_mode: center
+#
+# web_image_mode 可以是以下模式其中之一：center 、 contain 、 stretch 和 cover 。
+#web_image_mode: center
+
+# 要隐藏通知栏，使用 fullscreen 参数 。在 Web 上不起作为，因为 Web 没有通知栏。默认是 false 。
+# 注意: 不像 Android 、 iOS 当应用加载时不会自动显示通知栏。
+#       要显示通知栏，在 Flutter 应用中添加以下代码：
+#       WidgetsFlutterBinding.ensureInitialized();
+#       SystemChrome.setEnabledSystemUIOverlays([SystemUiOverlay.bottom, SystemUiOverlay.top]);
+#fullscreen: true
+
+# 如果改变了 info.plist 的名字，可以使用 info_plist_files 指定对应的文件名。
+# 只需移除下面三行前面的 # 字符，不要移除任何空格：
+#info_plist_files:
+#  - 'ios/Runner/Info-Debug.plist'
+#  - 'ios/Runner/Info-Release.plist'

@@ -1,14 +1,14 @@
-import 'package:feh_rebuilder/models/person/stats.dart';
-import 'package:feh_rebuilder/models/skill/json_skill.dart';
+import '../person/stats.dart';
+import 'json_skill.dart';
 
 class Skill extends JsonSkill {
   bool isSkillAccessory;
-  List<String>? rarity1;
-  List<String>? rarity2;
-  List<String>? rarity3;
-  List<String>? rarity4;
-  List<String>? rarity5;
-  List<String>? refineList;
+  Set<String> rarity1;
+  Set<String> rarity2;
+  Set<String> rarity3;
+  Set<String> rarity4;
+  Set<String> rarity5;
+  String? origSkill;
 
   Skill({
     String? idTag,
@@ -78,12 +78,12 @@ class Skill extends JsonSkill {
     int? cantoRange,
     int? pathfinderRange,
     this.isSkillAccessory = false,
-    this.rarity1,
-    this.rarity2,
-    this.rarity3,
-    this.rarity4,
-    this.rarity5,
-    this.refineList,
+    this.rarity1 = const {},
+    this.rarity2 = const {},
+    this.rarity3 = const {},
+    this.rarity4 = const {},
+    this.rarity5 = const {},
+    this.origSkill,
   }) : super(
           idTag: idTag,
           refineBase: refineBase,
@@ -247,12 +247,12 @@ class Skill extends JsonSkill {
         isSkillAccessory: json['isSkillAccessory'] != null
             ? json['isSkillAccessory'] as bool
             : false,
-        rarity1: (json['rarity1'] as List<dynamic>?)?.cast<String>(),
-        rarity2: (json['rarity2'] as List<dynamic>?)?.cast<String>(),
-        rarity3: (json['rarity3'] as List<dynamic>?)?.cast<String>(),
-        rarity4: (json['rarity4'] as List<dynamic>?)?.cast<String>(),
-        rarity5: (json['rarity5'] as List<dynamic>?)?.cast<String>(),
-        refineList: (json['refineList'] as List<dynamic>?)?.cast<String>(),
+        rarity1: Set.from(json['rarity1'] as Iterable<dynamic>? ?? []),
+        rarity2: Set.from(json['rarity2'] as Iterable<dynamic>? ?? []),
+        rarity3: Set.from(json['rarity3'] as Iterable<dynamic>? ?? []),
+        rarity4: Set.from(json['rarity4'] as Iterable<dynamic>? ?? []),
+        rarity5: Set.from(json['rarity5'] as Iterable<dynamic>? ?? []),
+        origSkill: json['orig_skill'],
       );
 
   @override
@@ -324,15 +324,27 @@ class Skill extends JsonSkill {
         'canto_range': cantoRange,
         'pathfinder_range': pathfinderRange,
         'isSkillAccessory': isSkillAccessory,
-        'rarity1': rarity1,
-        'rarity2': rarity2,
-        'rarity3': rarity3,
-        'rarity4': rarity4,
-        'rarity5': rarity5,
-        'refineList': refineList,
+        'rarity1': rarity1.toList(),
+        'rarity2': rarity2.toList(),
+        'rarity3': rarity3.toList(),
+        'rarity4': rarity4.toList(),
+        'rarity5': rarity5.toList(),
+        'orig_skill': origSkill,
       };
   @override
   String toString() {
     return idTag ?? "null";
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is Skill && other.idTag == idTag;
+  }
+
+  @override
+  int get hashCode {
+    return idTag.hashCode;
   }
 }

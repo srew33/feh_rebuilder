@@ -1,4 +1,4 @@
-import "package:feh_rebuilder/models/person/stats.dart";
+import '../person/stats.dart';
 
 class JsonSkill {
   String? idTag;
