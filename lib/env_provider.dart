@@ -16,10 +16,10 @@ class EnvProvider {
   static late final String tempDir;
 
   /// 程序版本
-  static const String appVersion = "1.2.0Beta2";
+  static const String appVersion = "1.2.1";
 
   /// 内建数据版本,必须与data.bin保持一致
-  static const int builtinDbVersion = 1647051532413;
+  static const int builtinDbVersion = 1649208732256;
 
   /// app版本
   static const int appVersionCode = 15;

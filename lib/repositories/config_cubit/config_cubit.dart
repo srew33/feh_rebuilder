@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:feh_rebuilder/core/enum/languages.dart';
 import 'package:feh_rebuilder/my_18n/widget.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 
 part 'config_state.dart';
 

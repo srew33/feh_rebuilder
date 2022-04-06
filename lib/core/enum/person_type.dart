@@ -11,20 +11,20 @@ enum PersonType {
 }
 
 extension PersonTypeExtension on PersonType {
-  String get value {
+  String get name {
     switch (this) {
       case PersonType.Normal:
         return "普通召唤";
       case PersonType.Grand_Hero_Battle:
         return "大英雄战";
       case PersonType.Special:
-        return "超英雄";
+        return "超英雄召唤";
       case PersonType.Story:
         return "剧情";
       case PersonType.Legendary:
-        return "传承英雄";
+        return "传承英雄召唤";
       case PersonType.Mythic:
-        return "神阶英雄";
+        return "神阶英雄召唤";
       case PersonType.Tempest_Trials:
         return "战涡连战";
     }

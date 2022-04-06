@@ -1,6 +1,7 @@
 import 'package:cloud_db/cloud_db.dart';
 import 'package:feh_rebuilder/core/enum/move_type.dart';
 import 'package:feh_rebuilder/core/enum/page_state.dart';
+import 'package:feh_rebuilder/core/enum/person_type.dart';
 import 'package:feh_rebuilder/core/enum/stats.dart';
 import 'package:feh_rebuilder/core/enum/weapon_type.dart';
 import 'package:feh_rebuilder/core/filters/skill.dart';
@@ -381,6 +382,9 @@ class _AttrTile extends StatelessWidget {
                         heroTag: hero.idTag!,
                         resplendent: true,
                         version: hero.versionNum!,
+                        type: (hero.minRarity == 0 && hero.maxRarity == 0)
+                            ? null
+                            : PersonType.values[hero.type],
                         child: ClipOval(
                           child: UniImage(
                               path: p
@@ -394,6 +398,9 @@ class _AttrTile extends StatelessWidget {
                         heroTag: hero.idTag!,
                         resplendent: false,
                         version: hero.versionNum!,
+                        type: (hero.minRarity == 0 && hero.maxRarity == 0)
+                            ? null
+                            : PersonType.values[hero.type],
                         child: ClipOval(
                           child: UniImage(
                               path: p
@@ -409,6 +416,9 @@ class _AttrTile extends StatelessWidget {
                     heroTag: hero.idTag!,
                     resplendent: false,
                     version: hero.versionNum!,
+                    type: (hero.minRarity == 0 && hero.maxRarity == 0)
+                        ? null
+                        : PersonType.values[hero.type],
                     child: ClipOval(
                       child: UniImage(
                           path: p
@@ -639,27 +649,33 @@ class _RarityTile extends StatelessWidget {
           hero.minRarity == 0
               ? hero.maxRarity == 0
                   ? const Text("暂未添加")
-                  : Row(
-                      children: [
-                        UniImage(
-                            path: p.join("assets", "static",
-                                "Rarity${hero.maxRarity}.png"),
-                            height: 20),
-                      ],
+                  : Tooltip(
+                      message: PersonType.values[hero.type].name,
+                      child: Row(
+                        children: [
+                          UniImage(
+                              path: p.join("assets", "static",
+                                  "Rarity${hero.maxRarity}.png"),
+                              height: 20),
+                        ],
+                      ),
                     )
-              : Row(
-                  children: [
-                    UniImage(
-                        path: p.join(
-                            "assets", "static", "Rarity${hero.minRarity}.png"),
-                        height: 20),
-                    const Text("--"),
-                    UniImage(
-                        path: p.join(
-                            "assets", "static", "Rarity${hero.maxRarity}.png"),
-                        height: 20),
-                  ],
-                )
+              : Tooltip(
+                  message: PersonType.values[hero.type].name,
+                  child: Row(
+                    children: [
+                      UniImage(
+                          path: p.join("assets", "static",
+                              "Rarity${hero.minRarity}.png"),
+                          height: 20),
+                      const Text("--"),
+                      UniImage(
+                          path: p.join("assets", "static",
+                              "Rarity${hero.maxRarity}.png"),
+                          height: 20),
+                    ],
+                  ),
+                ),
         ],
       ),
     );
@@ -1076,11 +1092,13 @@ class _DescWidget extends StatefulWidget implements PreferredSizeWidget {
     required this.heroTag,
     required this.resplendent,
     required this.version,
+    this.type,
   }) : super(key: key);
   final Widget child;
   final String heroTag;
   final bool resplendent;
   final int version;
+  final PersonType? type;
   @override
   State<_DescWidget> createState() => _DescWidgetState();
 
@@ -1166,6 +1184,8 @@ class _DescWidgetState extends State<_DescWidget>
                             Text(
                               "登场版本:${(widget.version / 100).floor()}.${widget.version % 100}",
                             ),
+                            if (widget.type != null)
+                              Text("获取方式：${widget.type!.name}"),
                           ],
                         ),
                       ),

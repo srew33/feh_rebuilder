@@ -110,6 +110,7 @@ class SkillFilter implements Filter<Skill, SkillFilterType> {
   }
 
   bool _filterMove(Skill skill, Set<MoveTypeEnum> valid) {
+    // 应该也可以使用位操作过滤，目前的方式比较好理解，暂时没发现性能问题，先不修改了
     // e.g skill.movEquip=8(b1000) validator=[0,0,0,1]
     List<String> validator = skill.movEquip!
         .toRadixString(2)

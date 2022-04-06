@@ -342,6 +342,7 @@ class _DataVersionTileState extends State<_DataVersionTile> {
                         await context.read<Repository>().gameDb.updateDb(json);
                         await for (var file
                             in Directory(cachePath).list(recursive: true)) {
+                          // todo 去掉和update的比较
                           if (file is File &&
                               p.basename(file.path) != "data.bin") {
                             String relative = p.relative(file.path,
