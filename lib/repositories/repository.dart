@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:math' as m;
 import 'dart:ui';
 
-import 'package:feh_rebuilder/core/enum/stats.dart';
 import 'package:feh_rebuilder/env_provider.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/person/stats.dart';
@@ -12,7 +11,6 @@ import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/models/weapon_type/weapon_type.dart';
 import 'package:feh_rebuilder/repositories/data_table.dart';
 import 'package:feh_rebuilder/utils.dart';
-import 'package:hashids2/hashids2.dart';
 
 import 'data_provider.dart';
 
@@ -91,7 +89,7 @@ class Repository {
 
     // 初始化返回的技能列表，最后一位是可学习的专武
     // 顺序为武器、辅助、奥义、A、B、C、S、祝福、需学习的专武
-    List<Skill?> _skills = List.filled(9, null);
+    List<Skill?> s = List.filled(9, null);
     // 循环根据category替换技能列表
     skills.asMap().forEach((index, skill) {
       // 技能为恒定的70个，每14个技能为一组
@@ -99,14 +97,13 @@ class Repository {
       if (skill != null) {
         // 如果是专武并且索引大于5，表示是需要学习后装备的武器
         if (skill.exclusive! && skill.category! == 0 && index > 5) {
-          _skills[8] = skill;
+          s[8] = skill;
         } else {
           // 如果_skills的category位不为空则比较技能级别，否则直接替换
-          if (_skills[skill.category!] != null) {
-            _skills[skill.category!] =
-                _compareSkill(_skills[skill.category!], skill);
+          if (s[skill.category!] != null) {
+            s[skill.category!] = _compareSkill(s[skill.category!], skill);
           } else {
-            _skills[skill.category!] = skill;
+            s[skill.category!] = skill;
           }
         }
       }
@@ -114,10 +111,10 @@ class Repository {
     // 对于一些真五杖系英雄，五星时武器位是null，专武会装备在后面，因此显示的是低级武器
     // 低级武器一般是袭击SID_アサルト,这里通过技能spcost判断，除袭击外最低级的技能都会>=150
     // 如果满足条件则把专武位的技能放到武器位上
-    if (_skills[0] != null && (_skills[0]?.spCost ?? 0) < 100) {
-      _skills[0] = _skills[8];
+    if (s[0] != null && (s[0]?.spCost ?? 0) < 100) {
+      s[0] = s[8];
     }
-    return _skills;
+    return s;
   }
 
   /// 比较两个技能上下级关系，如果S1的前置技能有S2则返回S1，否则返回S2，
@@ -214,59 +211,59 @@ class Repository {
     });
   }
 
-  PersonBuild? decodeBuild(String encoded) {
-    // todo 对于旧版本数据解析到新版本数据的处理，避免数据越界
-    try {
-      List<int> all = HashIds().decode(encoded);
-      PersonBuild? result;
+  // PersonBuild? decodeBuild(String encoded) {
+  //   // todo 对于旧版本数据解析到新版本数据的处理，避免数据越界
+  //   try {
+  //     List<int> all = HashIds().decode(encoded);
+  //     PersonBuild? result;
 
-      if (all.length < 18) {
-        throw "解析错误";
-      }
+  //     if (all.length < 18) {
+  //       throw "解析错误";
+  //     }
 
-      String personTag = cachePersons.values
-              .firstWhere(
-                (element) => element.idNum == all[0],
-                orElse: () => Person(),
-              )
-              .idTag ??
-          "";
-      if (personTag.isEmpty) {
-        // 旧版本数据找不到新版本人物
-        return null;
-      }
-      List<String?> skillsTags = all
-          .sublist(9, 17)
-          .map((e) => e == 0
-              ? null
-              : cacheSkills.values
-                  .firstWhere(
-                    (element) => element.idNum == e,
-                    orElse: () => Skill(idTag: "SID_CUSTOM_無し"),
-                  )
-                  .idTag)
-          .toList();
-      result = PersonBuild(
-        personTag: personTag,
-        equipSkills: skillsTags,
-        advantage:
-            all[1] == 9 ? null : StatsEnum.values[all[1]].name.toLowerCase(),
-        disAdvantage:
-            all[2] == 9 ? null : StatsEnum.values[all[2]].name.toLowerCase(),
-        rarity: all[3],
-        merged: all[4],
-        dragonflowers: all[5],
-        resplendent: all[6] == 1 ? true : false,
-        summonerSupport: all[7] == 1 ? true : false,
-        arenaScore: all[8],
-        ascendedAsset:
-            all[17] == 9 ? null : StatsEnum.values[all[17]].name.toLowerCase(),
-      );
+  //     String personTag = cachePersons.values
+  //             .firstWhere(
+  //               (element) => element.idNum == all[0],
+  //               orElse: () => Person(),
+  //             )
+  //             .idTag ??
+  //         "";
+  //     if (personTag.isEmpty) {
+  //       // 旧版本数据找不到新版本人物
+  //       return null;
+  //     }
+  //     List<String?> skillsTags = all
+  //         .sublist(9, 17)
+  //         .map((e) => e == 0
+  //             ? null
+  //             : cacheSkills.values
+  //                 .firstWhere(
+  //                   (element) => element.idNum == e,
+  //                   orElse: () => Skill(idTag: "SID_CUSTOM_無し"),
+  //                 )
+  //                 .idTag)
+  //         .toList();
+  //     result = PersonBuild(
+  //       personTag: personTag,
+  //       equipSkills: skillsTags,
+  //       advantage:
+  //           all[1] == 9 ? null : StatsEnum.values[all[1]].name.toLowerCase(),
+  //       disAdvantage:
+  //           all[2] == 9 ? null : StatsEnum.values[all[2]].name.toLowerCase(),
+  //       rarity: all[3],
+  //       merged: all[4],
+  //       dragonflowers: all[5],
+  //       resplendent: all[6] == 1 ? true : false,
+  //       summonerSupport: all[7] == 1 ? true : false,
+  //       arenaScore: all[8],
+  //       ascendedAsset:
+  //           all[17] == 9 ? null : StatsEnum.values[all[17]].name.toLowerCase(),
+  //     );
 
-      return result;
-    } on Exception catch (e) {
-      Utils.debug(e.toString());
-      return null;
-    }
-  }
+  //     return result;
+  //   } on Exception catch (e) {
+  //     Utils.debug(e.toString());
+  //     return null;
+  //   }
+  // }
 }

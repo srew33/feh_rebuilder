@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:feh_rebuilder/core/build_checker/build_checker.dart';
 import 'package:feh_rebuilder/core/platform_info.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -16,13 +17,13 @@ class EnvProvider {
   static late final String tempDir;
 
   /// 程序版本
-  static const String appVersion = "1.2.1";
+  static const String appVersion = "1.3.0";
 
   /// 内建数据版本,必须与data.bin保持一致
-  static const int builtinDbVersion = 1649208732256;
+  static const int builtinDbVersion = 1665996648097;
 
   /// app版本
-  static const int appVersionCode = 15;
+  static const int appVersionCode = 30;
 
   static Future<void> init() async {
     platformType = PlatformInfo().getCurrentPlatformType();
@@ -44,4 +45,9 @@ class EnvProvider {
         throw UnsupportedError("暂不支持该平台");
     }
   }
+
+  static List<BuilderCheckerPolicy> activeBuildCheckers = [
+    BuilderChecker1(),
+    BuilderChecker2()
+  ];
 }

@@ -301,6 +301,27 @@ class FilterDraw extends StatelessWidget {
                                     );
                                   },
                                 ),
+                                BlocSelector<HomeBloc, HomeState, bool>(
+                                  selector: (state) {
+                                    return state.cacheFilters
+                                        .contains(PersonFilterType.isAscendant);
+                                  },
+                                  builder: (context, selected) {
+                                    return ChoiceChip(
+                                      label: const Text("魔器"),
+                                      selected: selected,
+                                      onSelected: (bool val) {
+                                        context
+                                            .read<HomeBloc>()
+                                            .add(HomeFilterChanged(
+                                              operation: val,
+                                              filterType:
+                                                  PersonFilterType.isRearmed,
+                                            ));
+                                      },
+                                    );
+                                  },
+                                ),
                               ],
                             ),
                           ),

@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:feh_rebuilder/core/enum/sort_key.dart';
 import 'package:feh_rebuilder/home_screens/favourites/bloc/favscreen_bloc.dart';
 import 'package:feh_rebuilder/home_screens/favourites/page.dart';
@@ -85,7 +87,7 @@ class _AppBar extends StatelessWidget with PreferredSizeWidget {
                     HomeBloc bloc = context.read<HomeBloc>();
                     List<int>? sortKey = await showModalBottomSheet(
                         context: context,
-                        builder: (_context) => Picker(body: [
+                        builder: (context1) => Picker(body: [
                               {
                                 "minValue": 0,
                                 "maxValue": SortKey.values.length - 1,

@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 part of 'buildshare_bloc.dart';
 
 class BuildshareState extends Equatable {
@@ -27,23 +28,26 @@ class BuildshareState extends Equatable {
 }
 
 class BuildShareVM extends Equatable {
-  final PersonBuild personBuild;
+  // final PersonBuild personBuild;
 
   final Stats stats;
   final Person person;
   final int arenaScore;
   final List<Skill?> skills;
-  final HeroBuildTable tableData;
+  final NetBuild netBuild;
+  // final String objectId;
+  // final int likes;
+  // final String creator;
 
   const BuildShareVM({
-    required this.personBuild,
+    // required this.personBuild,
     required this.stats,
     required this.person,
     required this.arenaScore,
     required this.skills,
-    required this.tableData,
+    required this.netBuild,
   });
 
   @override
-  List<Object?> get props => [personBuild];
+  List<Object?> get props => [netBuild.build];
 }

@@ -1,9 +1,11 @@
-import 'package:bloc/bloc.dart';
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:equatable/equatable.dart';
 import 'package:feh_rebuilder/core/enum/languages.dart';
 import 'package:feh_rebuilder/my_18n/widget.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'config_state.dart';
 

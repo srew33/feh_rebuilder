@@ -1,4 +1,5 @@
-import 'package:cloud_db/cloud_db.dart';
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:feh_rebuilder/core/enum/move_type.dart';
 import 'package:feh_rebuilder/core/enum/page_state.dart';
 import 'package:feh_rebuilder/core/enum/person_type.dart';
@@ -13,7 +14,7 @@ import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/pages/build_share/page.dart';
 import 'package:feh_rebuilder/pages/skill_select/page.dart';
-import 'package:feh_rebuilder/repositories/api.dart';
+import 'package:feh_rebuilder/repositories/net_service/service.dart';
 import 'package:feh_rebuilder/repositories/config_cubit/config_cubit.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:feh_rebuilder/styles/text_styles.dart';
@@ -89,11 +90,9 @@ class _Content extends StatelessWidget {
         if (!context.read<ConfigCubit>().state.allowGetSysId) {
           Utils.showToast("请先到“其他”页面打开允许获取系统ID开关");
         } else {
-          await Cloud().login();
-          await context
-              .read<API>()
-              .reFreshCache(context.read<ConfigCubit>().state.allowGetSysId);
-          List<String>? selected = await showDialog(
+          await NetService().initService();
+
+          List<String>? selectedTags = await showDialog(
               context: context,
               builder: (context) {
                 GlobalKey<TagChooseState> s = GlobalKey();
@@ -101,14 +100,14 @@ class _Content extends StatelessWidget {
                   title: "添加标签",
                   body: TagChoose(
                     key: s,
-                    data: context.read<API>().cloudTags,
+                    data: context.read<NetService>().tags,
                   ),
                   onComfirm: () {
                     Navigator.of(context).pop(s.currentState!.selected);
                   },
                 );
               });
-          if (selected != null) {
+          if (selectedTags != null) {
             HerodetailState state = context.read<HerodetailBloc>().state;
             PersonBuild _ = PersonBuild(
               personTag: state.hero.idTag!,
@@ -125,20 +124,11 @@ class _Content extends StatelessWidget {
               resplendent: state.resplendent,
             );
 
-            var r = await context.read<API>().upload(
-                state.hero.idTag!,
-                Utils.encodeBuild(
-                    _,
-                    [
-                      for (Skill? s in state.equipSkills.sublist(0, 8))
-                        s == null ? 0 : s.idNum!
-                    ],
-                    state.hero.idNum!),
-                selected);
-
-            if (r?.statusCode == 201) {
-              Utils.showToast("成功");
-            }
+            await context.read<NetService>().uploadBuild(
+                  _.personTag,
+                  _.toNetBuild(),
+                  selectedTags,
+                );
           }
         }
 
@@ -148,6 +138,8 @@ class _Content extends StatelessWidget {
           Utils.showToast("请先到“其他”页面打开允许获取系统ID开关");
         } else {
           Person hero = context.read<HerodetailBloc>().state.hero;
+          // todo
+          await context.read<NetService>().initService();
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => HeroBuildSharePage(
@@ -180,20 +172,20 @@ class _Content extends StatelessWidget {
                     },
                     itemBuilder: (context) => [
                           PopupMenuItem(
-                            child: Text(state.favKey != null ? "保存" : "收藏"),
                             value: HerodetailAction.save,
+                            child: Text(state.favKey != null ? "保存" : "收藏"),
                           ),
                           // const PopupMenuItem(
                           //   child: Text("本地分享"),
                           //   value: HerodetailAction.share,
                           // ),
                           const PopupMenuItem(
-                            child: Text("上传"),
                             value: HerodetailAction.upload,
+                            child: Text("上传"),
                           ),
                           const PopupMenuItem(
-                            child: Text("网上配置"),
                             value: HerodetailAction.webBuild,
+                            child: Text("网上配置"),
                           ),
                         ]),
               if (kIsWeb)
@@ -315,10 +307,10 @@ class _Content extends StatelessWidget {
                                       in StatsEnum.values.getRange(0, 5))
                                     DropdownMenuItem(
                                       value: key.name,
-                                      child:
-                                          Text("CUSTOM_STATS_${key.name}".tr),
                                       enabled: key.name !=
                                           state.advantage?.toUpperCase(),
+                                      child:
+                                          Text("CUSTOM_STATS_${key.name}".tr),
                                     ),
                                 ],
                                 onChanged: (obj) {
@@ -463,7 +455,7 @@ class _AttrTile extends StatelessWidget {
               onPressed: () async {
                 List<int?>? _ = await showModalBottomSheet(
                     context: context,
-                    builder: (_context) => Picker(
+                    builder: (context1) => Picker(
                           title: const Text("突破极限"),
                           body: [
                             {
@@ -498,14 +490,6 @@ class _AttrTile extends StatelessWidget {
             return SizedBox(
               width: 110,
               child: TextButton(
-                child: state.advantage == null && state.disAdvantage == null
-                    ? Text("CUSTOM_STATS_NULL".tr)
-                    : Text("+%s-%s".fill([
-                        "CUSTOM_STATS_${(state.advantage ?? "NULL").toUpperCase()}"
-                            .tr,
-                        "CUSTOM_STATS_${(state.disAdvantage ?? "NULL").toUpperCase()}"
-                            .tr
-                      ])),
                 style: ButtonStyle(
                   padding: MaterialStateProperty.all(const EdgeInsets.all(15)),
                   side: MaterialStateProperty.all(const BorderSide()),
@@ -518,7 +502,7 @@ class _AttrTile extends StatelessWidget {
                   ];
                   List<int?>? _ = await showModalBottomSheet(
                       context: context,
-                      builder: (_context) => Picker(
+                      builder: (context1) => Picker(
                             nullIndex: 0,
                             title: const Text("优势/劣势"),
                             body: [
@@ -530,9 +514,7 @@ class _AttrTile extends StatelessWidget {
                                 "textMapper": (String key) {
                                   return int.parse(key) == 0
                                       ? statsList[int.parse(key)]
-                                      : "+" +
-                                          "CUSTOM_STATS_${statsList[int.parse(key)].toUpperCase()}"
-                                              .tr;
+                                      : "+${"CUSTOM_STATS_${statsList[int.parse(key)].toUpperCase()}".tr}";
                                 }
                               },
                               {
@@ -543,9 +525,7 @@ class _AttrTile extends StatelessWidget {
                                 "textMapper": (String key) {
                                   return int.parse(key) == 0
                                       ? statsList[int.parse(key)]
-                                      : "-" +
-                                          "CUSTOM_STATS_${statsList[int.parse(key)].toUpperCase()}"
-                                              .tr;
+                                      : "-${"CUSTOM_STATS_${statsList[int.parse(key)].toUpperCase()}".tr}";
                                 }
                               },
                             ],
@@ -563,6 +543,14 @@ class _AttrTile extends StatelessWidget {
                     }
                   }
                 },
+                child: state.advantage == null && state.disAdvantage == null
+                    ? Text("CUSTOM_STATS_NULL".tr)
+                    : Text("+%s-%s".fill([
+                        "CUSTOM_STATS_${(state.advantage ?? "NULL").toUpperCase()}"
+                            .tr,
+                        "CUSTOM_STATS_${(state.disAdvantage ?? "NULL").toUpperCase()}"
+                            .tr
+                      ])),
               ),
             );
           },
@@ -581,7 +569,7 @@ class _AttrTile extends StatelessWidget {
               onPressed: () async {
                 List<int?>? _ = await showModalBottomSheet(
                     context: context,
-                    builder: (_context) => Picker(
+                    builder: (context1) => Picker(
                           title: const Text("神龙之花"),
                           body: [
                             {
@@ -842,7 +830,8 @@ class _LegendaryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     var hero =
         context.select<HerodetailBloc, Person>((value) => value.state.hero);
-    return (hero.legendary?.kind ?? 4) != 4
+    return ((hero.legendary?.kind ?? 4) != 4 &&
+            (hero.legendary?.kind ?? 4) != 5)
         ? Column(
             children: [
               ListTile(
@@ -1166,20 +1155,17 @@ class _DescWidgetState extends State<_DescWidget>
                             ),
                             widget.resplendent
                                 ? Text(
-                                    "声优：" +
-                                        "MPID_VOICE_${tagWithoutPrefix}EX01".tr,
+                                    "声优：${"MPID_VOICE_${tagWithoutPrefix}EX01".tr}",
                                   )
                                 : Text(
-                                    "声优：" + "MPID_VOICE_$tagWithoutPrefix".tr,
+                                    "声优：${"MPID_VOICE_$tagWithoutPrefix".tr}",
                                   ),
                             widget.resplendent
                                 ? Text(
-                                    "画师：" +
-                                        "MPID_ILLUST_${tagWithoutPrefix}EX01"
-                                            .tr,
+                                    "画师：${"MPID_ILLUST_${tagWithoutPrefix}EX01".tr}",
                                   )
                                 : Text(
-                                    "画师：" + "MPID_ILLUST_$tagWithoutPrefix".tr,
+                                    "画师：${"MPID_ILLUST_$tagWithoutPrefix".tr}",
                                   ),
                             Text(
                               "登场版本:${(widget.version / 100).floor()}.${widget.version % 100}",

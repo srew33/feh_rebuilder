@@ -19,6 +19,8 @@ enum PersonFilterType {
   isMythic,
   // 开花英雄
   isAscendant,
+  // 魔器英雄
+  isRearmed,
 
   moveType,
   weaponType,
@@ -51,15 +53,15 @@ class PersonFilter implements Filter<Person, PersonFilterType> {
 
   @override
   List<Person> get output {
-    List<Person> _output = [];
+    List<Person> result = [];
 
     for (Person t in input) {
       if (filtFunc(t)) {
-        _output.add(t);
+        result.add(t);
       }
     }
 
-    return _output;
+    return result;
   }
 
   @override
@@ -97,12 +99,14 @@ class PersonFilter implements Filter<Person, PersonFilterType> {
             _legendaryKind.contains(person.legendary?.element);
       case PersonFilterType.isAscendant:
         return person.legendary?.kind == 4;
+      case PersonFilterType.isRearmed:
+        return person.legendary?.kind == 5;
       case PersonFilterType.recentlyUpdated:
         return person.recentlyUpdate;
       case PersonFilterType.gameVersion:
-        Set<int> _valid =
+        Set<int> valid1 =
             (valid as Set<GameVersionEnum>).map((e) => e.index + 1).toSet();
-        return _valid.contains((person.versionNum! / 100).floor());
+        return valid1.contains((person.versionNum! / 100).floor());
       default:
         throw "错误的过滤类型";
     }

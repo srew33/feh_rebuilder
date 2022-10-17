@@ -1,6 +1,7 @@
+// ignore_for_file: use_build_context_synchronously, depend_on_referenced_packages
+
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:feh_rebuilder/core/enum/languages.dart';
@@ -11,9 +12,9 @@ import 'package:feh_rebuilder/home_screens/favourites/bloc/favscreen_bloc.dart';
 import 'package:feh_rebuilder/home_screens/home/bloc/home_bloc.dart';
 import 'package:feh_rebuilder/home_screens/page.dart';
 import 'package:feh_rebuilder/my_18n/widget.dart';
-import 'package:feh_rebuilder/repositories/api.dart';
 import 'package:feh_rebuilder/repositories/config_cubit/config_cubit.dart';
 import 'package:feh_rebuilder/repositories/data_provider.dart';
+import 'package:feh_rebuilder/repositories/net_service/service.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -119,7 +120,7 @@ class _MyAppState extends State<MyApp> {
           create: (context) => widget.repo,
         ),
         RepositoryProvider(
-          create: (context) => API(),
+          create: (context) => NetService(),
           lazy: false,
         ),
       ],
@@ -148,6 +149,7 @@ class _MyAppState extends State<MyApp> {
             return MaterialApp(
               title: 'feh_rebuilder',
               scrollBehavior: MyCustomScrollBehavior(),
+
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
@@ -167,6 +169,7 @@ class _MyAppState extends State<MyApp> {
               locale: const Locale("zh", "CN"),
               theme: ThemeData(
                 primarySwatch: Colors.blue,
+                // useMaterial3: true,
                 // fontFamily: "misans",
               ),
               builder: EasyLoading.init(),

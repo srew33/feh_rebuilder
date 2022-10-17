@@ -1,29 +1,31 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:archive/archive.dart';
-import 'package:cloud_db/cloud_db.dart';
 import 'package:date_format/date_format.dart';
 import 'package:feh_rebuilder/core/enum/languages.dart';
 import 'package:feh_rebuilder/core/filters/skill.dart';
 import 'package:feh_rebuilder/env_provider.dart';
 import 'package:feh_rebuilder/home_screens/home/bloc/home_bloc.dart';
-import 'package:feh_rebuilder/models/cloud_object/update_table.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/pages/skill_select/page.dart';
 import 'package:feh_rebuilder/core/platform_info.dart';
-import 'package:feh_rebuilder/repositories/api.dart';
+import 'package:feh_rebuilder/repositories/net_service/cloud_object/update_table.dart';
+import 'package:feh_rebuilder/repositories/net_service/service.dart';
 import 'package:feh_rebuilder/repositories/config_cubit/config_cubit.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:feh_rebuilder/widgets/picker.dart';
 import 'package:feh_rebuilder/widgets/uni_dialog.dart';
-import 'package:feh_rebuilder/widgets/update_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
+
+import '../../widgets/update_dialog.dart';
 
 class OthersPage extends StatelessWidget {
   const OthersPage({Key? key}) : super(key: key);
@@ -47,6 +49,9 @@ class OthersPage extends StatelessWidget {
       controller: ScrollController(),
       children: [
         Container(
+          alignment: Alignment.centerLeft,
+          height: 50,
+          color: Colors.grey.shade200,
           child: Padding(
             padding: const EdgeInsets.only(left: 20),
             child: Text(
@@ -54,9 +59,6 @@ class OthersPage extends StatelessWidget {
               style: Theme.of(context).textTheme.headline6,
             ),
           ),
-          alignment: Alignment.centerLeft,
-          height: 50,
-          color: Colors.grey.shade200,
         ),
         for (String k in skillCategories.keys)
           ListTile(
@@ -76,6 +78,9 @@ class OthersPage extends StatelessWidget {
             )),
           ),
         Container(
+          alignment: Alignment.centerLeft,
+          height: 50,
+          color: Colors.grey.shade200,
           child: Padding(
             padding: const EdgeInsets.only(left: 20),
             child: Text(
@@ -83,9 +88,6 @@ class OthersPage extends StatelessWidget {
               style: Theme.of(context).textTheme.headline6,
             ),
           ),
-          alignment: Alignment.centerLeft,
-          height: 50,
-          color: Colors.grey.shade200,
         ),
         const _LangTile(),
 
@@ -171,7 +173,7 @@ class _LangTile extends StatelessWidget {
         ],
       ),
       onTap: () async {
-        List<int>? _newLanguage = await showModalBottomSheet(
+        List<int>? newLanguage = await showModalBottomSheet(
             context: context,
             builder: (context) => Picker(
                   body: [
@@ -189,8 +191,8 @@ class _LangTile extends StatelessWidget {
                   title: const Text("请选择语言"),
                 ));
 
-        if (_newLanguage != null) {
-          AppLanguages newLang = AppLanguages.values[_newLanguage[0]];
+        if (newLanguage != null) {
+          AppLanguages newLang = AppLanguages.values[newLanguage[0]];
           await context.read<ConfigCubit>().switchLang(context, newLang);
           context.read<HomeBloc>().add(HomeLangChanged());
         }
@@ -394,9 +396,10 @@ class _DeviceIdTile extends StatelessWidget {
         ],
       ),
       onTap: () async {
-        String _deviceId = await Cloud().generateDeviceId();
+        String deviceId = await NetService().generateDeviceId();
+        String? usingDeviceId = (await NetService().getCurrentUser())[1];
         TextEditingController controller =
-            TextEditingController(text: Cloud().deviceId ?? _deviceId);
+            TextEditingController(text: usingDeviceId ?? deviceId);
 
         showDialog(
             context: context,
@@ -417,9 +420,9 @@ class _DeviceIdTile extends StatelessWidget {
                                   .read<ConfigCubit>()
                                   .state
                                   .allowGetSysId) {
-                                await Cloud().restoreDevice(
+                                await context.read<NetService>().restoreDevice(
                                     controller.text.replaceAll(" ", ""));
-                                Utils.showToast("成功");
+                                // Utils.showToast("成功");
                                 Navigator.of(context).pop();
                               } else {
                                 Utils.showToast("请先到“其他”页面打开允许获取系统ID开关");
@@ -478,39 +481,18 @@ class _UpdateTile extends StatelessWidget {
         ],
       ),
       onTap: () async {
-        var r = await context.read<API>().query(
-          "app_update_info",
-          {
-            "where": jsonEncode(
-              {
-                // server_version> 当前数据版本 and  minimal_version<=当前程序版本
-                // 结果降序排列
-                r"$and": [
-                  {
-                    "minimal_version": {r"$lte": EnvProvider.appVersionCode}
-                  },
-                  {
-                    "server_version": {
-                      r"$gt": context.read<Repository>().version
-                      // r"$gte": context.read<Repository>().version
-                    }
-                  },
-                ],
-              },
-            ),
-            "order": "-id",
-          },
-        );
+        var r = await context.read<NetService>().checkUpdate(
+            EnvProvider.appVersionCode, context.read<Repository>().version);
 
         if (r != null) {
-          var info = [for (var item in r.results) UpdateTable.fromJson(item)];
-          if (info.isEmpty) {
+          // var info = [for (var item in r) NetUpdateInfoPO.fromJson(item)];
+          if (r.isEmpty) {
             Utils.showToast("未发现更新");
           } else {
             await showDialog(
                 context: context,
                 builder: (context) => UpdateWebDialog(
-                      updateInfo: info,
+                      updateInfo: r.map((e) => e.toViewModel()).toList(),
                     ));
           }
         }

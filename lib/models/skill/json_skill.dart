@@ -67,6 +67,7 @@ class JsonSkill {
   bool? distantCounter;
   int? cantoRange;
   int? pathfinderRange;
+  bool? arcaneWeapon;
 
   JsonSkill({
     this.idTag,
@@ -135,6 +136,7 @@ class JsonSkill {
     this.distantCounter,
     this.cantoRange,
     this.pathfinderRange,
+    this.arcaneWeapon,
   });
 
   factory JsonSkill.fromJson(Map<String, dynamic> json) => JsonSkill(
@@ -228,6 +230,7 @@ class JsonSkill {
         distantCounter: json['distant_counter'] as bool?,
         cantoRange: json['canto_range'] as int?,
         pathfinderRange: json['pathfinder_range'] as int?,
+        arcaneWeapon: json['arcane_weapon'] as bool?,
       );
 
   Map<String, dynamic> toJson() => {
@@ -297,6 +300,7 @@ class JsonSkill {
         'distant_counter': distantCounter,
         'canto_range': cantoRange,
         'pathfinder_range': pathfinderRange,
+        "arcane_weapon": arcaneWeapon
       };
   @override
   String toString() {

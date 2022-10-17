@@ -10,9 +10,9 @@ abstract class BuildshareEvent extends Equatable {
 class BuildshareStarted extends BuildshareEvent {}
 
 class BuildshareDeleted extends BuildshareEvent {
-  final String objectId;
+  final NetBuild netBuild;
   const BuildshareDeleted({
-    required this.objectId,
+    required this.netBuild,
   });
 }
 

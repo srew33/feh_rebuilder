@@ -1,4 +1,7 @@
 import 'package:equatable/equatable.dart';
+import 'package:feh_rebuilder/repositories/net_service/cloud_object/build_table.dart';
+
+import '../../utils.dart';
 
 class PersonBuild extends Equatable {
   final String personTag;
@@ -11,7 +14,9 @@ class PersonBuild extends Equatable {
   final bool summonerSupport;
   final List<String?> equipSkills;
 
-  /// 竞技场分数，弃用
+  @Deprecated(
+    '竞技场分数，弃用',
+  )
   final int arenaScore;
 
   /// 弃用
@@ -92,5 +97,42 @@ class PersonBuild extends Equatable {
       ascendedAsset,
       tag,
     ];
+  }
+
+  List toNetBuild() {
+    return [
+      personTag,
+      advantage == null ? null : Utils.statKeys.indexOf(advantage!),
+      disAdvantage == null ? null : Utils.statKeys.indexOf(disAdvantage!),
+      rarity,
+      merged,
+      dragonflowers,
+      resplendent,
+      summonerSupport,
+      for (var s in equipSkills.sublist(0, 8)) s,
+      ascendedAsset == null ? null : Utils.statKeys.indexOf(ascendedAsset!),
+    ];
+  }
+
+  factory PersonBuild.fromNet(NetBuildPO net) {
+    return PersonBuild(
+      personTag: net.build[0],
+      // 一开始把空的性格定义为9，1.3.0改为null，这里是为了兼容
+      advantage: (net.build[1] == null || net.build[1] == 9)
+          ? null
+          : Utils.statKeys[net.build[1]],
+      disAdvantage: (net.build[2] == null || net.build[2] == 9)
+          ? null
+          : Utils.statKeys[net.build[2]],
+      rarity: net.build[3],
+      merged: net.build[4],
+      dragonflowers: net.build[5],
+      resplendent: net.build[6],
+      summonerSupport: net.build[7],
+      equipSkills: net.build.sublist(8, 16).cast<String?>(),
+      ascendedAsset: (net.build[16] == null || net.build[16] == 9)
+          ? null
+          : Utils.statKeys[net.build[16]],
+    );
   }
 }

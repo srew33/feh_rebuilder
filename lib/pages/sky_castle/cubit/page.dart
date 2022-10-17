@@ -14,7 +14,7 @@ class SkyCastlePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => SkycastleCubit(),
-      child: _Content(),
+      child: const _Content(),
     );
   }
 }
@@ -38,7 +38,7 @@ class _Content extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () {},
-            icon: Icon(
+            icon: const Icon(
               Icons.edit,
             ),
           ),
@@ -46,7 +46,7 @@ class _Content extends StatelessWidget {
       ),
       body: Column(
         children: [
-          Spacer(),
+          const Spacer(),
           Stack(
             children: [
               Align(
@@ -70,7 +70,7 @@ class _Content extends StatelessWidget {
                         _DragItem(
                           data: [5, 10].contains(i)
                               ? p.join(r"assets\SkyCastle\Chip",
-                                  "Deco" + "$i".padLeft(2, "0"), "Default.png")
+                                  "Deco${"$i".padLeft(2, "0")}", "Default.png")
                               : "",
                           width: width,
                         )
@@ -80,7 +80,7 @@ class _Content extends StatelessWidget {
               )
             ],
           ),
-          Spacer(),
+          const Spacer(),
         ],
       ),
     );
@@ -164,7 +164,7 @@ class __DragItemState extends State<_DragItem> {
         if (containsItem) {
           return Draggable<_DragMsg>(
             data: current,
-            child: Container(
+            feedback: Container(
               width: ((widget.width - 1) / 6),
               height: widget.width / 6,
               decoration: BoxDecoration(
@@ -175,7 +175,7 @@ class __DragItemState extends State<_DragItem> {
                 ),
               ),
             ),
-            feedback: Container(
+            child: Container(
               width: ((widget.width - 1) / 6),
               height: widget.width / 6,
               decoration: BoxDecoration(

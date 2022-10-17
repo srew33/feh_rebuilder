@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart';
@@ -13,7 +12,6 @@ import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:hashids2/hashids2.dart';
 import 'package:path/path.dart' as p;
 import 'package:pointycastle/export.dart'
     hide Signer
@@ -356,32 +354,6 @@ class Utils {
         publicKey: parser.parse(publicKeyString) as RSAPublicKey));
 
     return signer2.verify(hash, Encrypted(signature));
-  }
-
-  /// 自定义build转字符串
-  static String encodeBuild(PersonBuild build, List<int> skills, int personId) {
-    List<int> all = [];
-
-    all.add(personId);
-    all.add(
-        build.advantage == null ? 9 : Utils.statKeys.indexOf(build.advantage!));
-    all.add(build.disAdvantage == null
-        ? 9
-        : Utils.statKeys.indexOf(build.disAdvantage!));
-    all.add(build.rarity);
-    all.add(build.merged);
-    all.add(build.dragonflowers);
-    all.add(build.resplendent ? 1 : 0);
-    all.add(build.summonerSupport ? 1 : 0);
-    all.add(build.arenaScore);
-    all.addAll(skills);
-    all.add(build.ascendedAsset == null
-        ? 9
-        : Utils.statKeys.indexOf(build.ascendedAsset!));
-    // HashIds主要实现多个int的合并编码和压缩，不需要加密，所以不用加盐
-    String result = HashIds().encodeList(all);
-
-    return result;
   }
 
   static void showToast(String info) {

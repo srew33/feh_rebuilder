@@ -84,6 +84,7 @@ class Skill extends JsonSkill {
     this.rarity4 = const {},
     this.rarity5 = const {},
     this.origSkill,
+    bool? arcaneWeapon,
   }) : super(
           idTag: idTag,
           refineBase: refineBase,
@@ -151,6 +152,7 @@ class Skill extends JsonSkill {
           distantCounter: distantCounter,
           cantoRange: cantoRange,
           pathfinderRange: pathfinderRange,
+          arcaneWeapon: arcaneWeapon,
         );
 
   factory Skill.fromJson(Map<String, dynamic> json) => Skill(
@@ -253,6 +255,7 @@ class Skill extends JsonSkill {
         rarity4: Set.from(json['rarity4'] as Iterable<dynamic>? ?? []),
         rarity5: Set.from(json['rarity5'] as Iterable<dynamic>? ?? []),
         origSkill: json['orig_skill'],
+        arcaneWeapon: json['arcane_weapon'] as bool?,
       );
 
   @override
@@ -330,6 +333,7 @@ class Skill extends JsonSkill {
         'rarity4': rarity4.toList(),
         'rarity5': rarity5.toList(),
         'orig_skill': origSkill,
+        "arcane_weapon": arcaneWeapon,
       };
   @override
   String toString() {

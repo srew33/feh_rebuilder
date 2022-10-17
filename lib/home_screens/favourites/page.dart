@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:feh_rebuilder/home_screens/favourites/bloc/favscreen_bloc.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/pages/hero_detail/page.dart';

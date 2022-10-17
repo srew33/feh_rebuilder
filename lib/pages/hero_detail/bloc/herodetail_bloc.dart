@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:feh_rebuilder/core/enum/page_state.dart';
+import 'package:feh_rebuilder/env_provider.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/person/stats.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
@@ -47,10 +48,10 @@ class HerodetailBloc extends Bloc<HerodetailEvent, HerodetailState> {
 
     } else {
       // 不为空，一般代表自定义的技能配置
-      var _equipSkills = repo.getSkillsByTags(initBuild.equipSkills);
+      var eqs = repo.getSkillsByTags(initBuild.equipSkills);
       // 合并两个技能列表，主要为了获取第9位的专武
-      for (var i = 0; i < _equipSkills.length; i++) {
-        equipSkills[i] = _equipSkills[i];
+      for (var i = 0; i < eqs.length; i++) {
+        equipSkills[i] = eqs[i];
       }
     }
     // 如果默认武器位refineId不为空就添加对应的stats，应该仅限从收藏页进入的部分情况才会出现
@@ -96,6 +97,7 @@ class HerodetailBloc extends Bloc<HerodetailEvent, HerodetailState> {
       exclusiveList: exclusiveList,
       refinedWeaponStats: refinedWeaponStats,
       hasRefinedWeapon: hasRefinedWeapon,
+      ascendedAsset: initBuild.ascendedAsset,
       // baseStats: baseStats,
       // skillsStats: skillsStats,
       // exclusiveList: initBuild.,
@@ -134,6 +136,14 @@ class HerodetailBloc extends Bloc<HerodetailEvent, HerodetailState> {
 
     List<Skill?> newSkills = [...state.equipSkills];
     newSkills[event.index] = newSkill;
+
+    for (var p in EnvProvider.activeBuildCheckers) {
+      var r = p.check(state.hero, newSkills);
+      if (!r.result) {
+        Utils.showToast(r.msg);
+        return;
+      }
+    }
 
     emit(state.copyWith(
       refinedWeaponStats: refinedWeaponStats,

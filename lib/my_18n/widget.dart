@@ -17,9 +17,9 @@ class MyI18nWidget extends StatefulWidget {
   final TranslationLoader translationLoader;
 
   @override
-  State<MyI18nWidget> createState() => _MyI18nWidgetState();
+  State<MyI18nWidget> createState() => MyI18nWidgetState();
 
-  static _MyI18nWidgetState of(BuildContext context) {
+  static MyI18nWidgetState of(BuildContext context) {
     _InheritedI18n? inherited =
         context.dependOnInheritedWidgetOfExactType<_InheritedI18n>();
 
@@ -31,7 +31,7 @@ class MyI18nWidget extends StatefulWidget {
   }
 }
 
-class _MyI18nWidgetState extends State<MyI18nWidget> {
+class MyI18nWidgetState extends State<MyI18nWidget> {
   set locale(Locale newLocale) {
     widget.translationLoader
         .load(newLocale)
@@ -59,7 +59,7 @@ class _MyI18nWidgetState extends State<MyI18nWidget> {
 }
 
 class _InheritedI18n extends InheritedWidget {
-  final _MyI18nWidgetState data;
+  final MyI18nWidgetState data;
 
   const _InheritedI18n({
     Key? key,

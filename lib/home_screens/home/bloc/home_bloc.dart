@@ -1,4 +1,3 @@
-import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:feh_rebuilder/core/enum/game_version.dart';
 import 'package:feh_rebuilder/core/enum/languages.dart';
@@ -14,6 +13,7 @@ import 'package:feh_rebuilder/core/filters/person.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:feh_rebuilder/widgets/jumpable_listview.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'home_event.dart';
 part 'home_state.dart';
@@ -316,13 +316,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
         // 华为的机器读取当前的locale似乎会和其他机器不一样，这里直接传值
 
-        String _localeStr = lang.locale.toString();
+        String localeStr = lang.locale.toString();
 
-        _sortByTranslations(source, _localeStr);
+        _sortByTranslations(source, localeStr);
 
         for (var person in source) {
           String translatedNames =
-              person.translatedNames[_localeStr] ?? person.roman!;
+              person.translatedNames[localeStr] ?? person.roman!;
           if (!grouped.containsKey(translatedNames[0].toUpperCase())) {
             grouped.addAll({
               translatedNames[0].toUpperCase(): [person]

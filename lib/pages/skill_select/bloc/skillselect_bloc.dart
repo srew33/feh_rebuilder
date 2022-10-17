@@ -1,4 +1,3 @@
-import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:feh_rebuilder/core/enum/move_type.dart';
 import 'package:feh_rebuilder/core/enum/page_state.dart';
@@ -7,6 +6,7 @@ import 'package:feh_rebuilder/core/filterChain/filter_chain.dart';
 import 'package:feh_rebuilder/core/filters/skill.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 part 'skillselect_event.dart';
 part 'skillselect_state.dart';

@@ -1,12 +1,14 @@
-import 'package:cloud_db/cloud_db.dart';
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:feh_rebuilder/core/enum/page_state.dart';
 import 'package:feh_rebuilder/home_screens/favourites/bloc/favscreen_bloc.dart';
-import 'package:feh_rebuilder/models/cloud_object/favorite_table.dart';
+import 'package:feh_rebuilder/models/build_share/favorite_table.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/pages/build_share/bloc/buildshare_bloc.dart';
-import 'package:feh_rebuilder/repositories/api.dart';
+import 'package:feh_rebuilder/repositories/net_service/service.dart';
+
 import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:feh_rebuilder/widgets/uni_image.dart';
@@ -24,7 +26,7 @@ class HeroBuildSharePage extends StatelessWidget {
     return BlocProvider<BuildshareBloc>(
       create: (context) => BuildshareBloc(
         repo: context.read<Repository>(),
-        api: context.read<API>(),
+        api: context.read<NetService>(),
         hero: hero,
       )..add(BuildshareStarted()),
       child: SafeArea(
@@ -100,19 +102,19 @@ class _BuildItem extends StatelessWidget {
                     alignment: AlignmentDirectional.center,
                     children: [
                       UniImage(
-                        path: heroBuild.personBuild.summonerSupport
+                        path: heroBuild.netBuild.build.summonerSupport
                             ? "assets/static/Wdw_Reliance.png"
                             : "assets/static/Wdw_5.png",
                         height: 60,
                       ),
                       UniImage(
-                        path: heroBuild.personBuild.resplendent
+                        path: heroBuild.netBuild.build.resplendent
                             ? "assets/faces/${heroBuild.person.faceName}EX01.webp"
                             : "assets/faces/${heroBuild.person.faceName}.webp",
                         height: 55,
                       ),
                       UniImage(
-                        path: heroBuild.personBuild.summonerSupport
+                        path: heroBuild.netBuild.build.summonerSupport
                             ? "assets/static/Frm_Reliance.png"
                             : "assets/static/Frm_5.png",
                         height: 60,
@@ -133,7 +135,7 @@ class _BuildItem extends StatelessWidget {
                           ),
                         ),
                         child: Center(
-                            child: Text("+${heroBuild.personBuild.merged}")),
+                            child: Text("+${heroBuild.netBuild.build.merged}")),
                       ),
                       const Text(
                         "突破极限",
@@ -156,7 +158,7 @@ class _BuildItem extends StatelessWidget {
                         ),
                         child: Center(
                             child: Text(
-                                "+${heroBuild.personBuild.dragonflowers}")),
+                                "+${heroBuild.netBuild.build.dragonflowers}")),
                       ),
                       const Text(
                         "神龙之花",
@@ -167,10 +169,10 @@ class _BuildItem extends StatelessWidget {
                   const SizedBox(
                     width: 10,
                   ),
-                  Text(
-                    heroBuild.tableData.title ?? "",
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  // Text(
+                  //   heroBuild.objectId.title ?? "",
+                  //   overflow: TextOverflow.ellipsis,
+                  // ),
                   Expanded(
                       child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,18 +183,15 @@ class _BuildItem extends StatelessWidget {
                   ))
                 ],
               ),
-              if (Cloud().currentUser.username == heroBuild.tableData.creator)
+              if (context.read<NetService>().currentUser ==
+                  heroBuild.netBuild.creator)
                 Align(
                   alignment: Alignment.topRight,
                   child: IconButton(
                       // 删除按钮
                       onPressed: () async {
-                        context.read<BuildshareBloc>().add(BuildshareDeleted(
-                            objectId: heroBuild.tableData.objectId!));
-                        // var controller =
-                        //     Get.find<HeroBuildSharePageController>();
-                        // controller.throttle(() => controller.delete(
-                        //     context, heroBuild.tableData.objectId!));
+                        context.read<BuildshareBloc>().add(
+                            BuildshareDeleted(netBuild: heroBuild.netBuild));
                       },
                       icon: const Icon(
                         Icons.delete_forever,
@@ -204,18 +203,18 @@ class _BuildItem extends StatelessWidget {
           const SizedBox(
             height: 3,
           ),
-          if ((heroBuild.tableData.tags?.objects ?? []).isNotEmpty)
+          if ((heroBuild.netBuild.tags).isNotEmpty)
             SizedBox(
               height: 30,
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  for (var tag in heroBuild.tableData.tags!.objects)
+                  for (var tag in heroBuild.netBuild.tags)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       child: Chip(
                         label: Text(
-                          context.read<API>().cloudTags[tag] ?? "",
+                          context.read<NetService>().tags[tag] ?? "",
                         ),
                       ),
                     )
@@ -231,14 +230,14 @@ class _BuildItem extends StatelessWidget {
               for (var stat in heroBuild.stats.toJson().entries)
                 FittedBox(
                   child: Text(
-                    "${("CUSTOM_STATS_" + stat.key.toUpperCase()).tr}:${stat.value}",
+                    "${("CUSTOM_STATS_${stat.key.toUpperCase()}").tr}:${stat.value}",
                     style: TextStyle(
                       color: getStatCol(
                         stat.key,
-                        heroBuild.personBuild.merged,
-                        heroBuild.personBuild.advantage,
-                        heroBuild.personBuild.disAdvantage,
-                        heroBuild.personBuild.ascendedAsset,
+                        heroBuild.netBuild.build.merged,
+                        heroBuild.netBuild.build.advantage,
+                        heroBuild.netBuild.build.disAdvantage,
+                        heroBuild.netBuild.build.ascendedAsset,
                       ),
                     ),
                   ),
@@ -265,16 +264,16 @@ class _BuildItem extends StatelessWidget {
           _ItemActions(
             // 这里要传入一个key，否则删除的时候会因为模型深度问题认为参数相等而不重建
             key: UniqueKey(),
-            objectId: heroBuild.tableData.objectId!,
-            likeId: heroBuild.tableData.likes!.objectId,
-            creator: heroBuild.tableData.creator ?? "",
+            objectId: heroBuild.netBuild.objectId!,
+            likesId: heroBuild.netBuild.likesId,
+            creator: heroBuild.netBuild.creator,
             onAdd: () async {
               try {
                 Repository repo = context.read<Repository>();
 
                 await repo.favourites.putIfAbsent(
                     DateTime.now().millisecondsSinceEpoch.toString(),
-                    heroBuild.personBuild.toJson());
+                    heroBuild.netBuild.build.toJson());
 
                 context.read<FavscreenBloc>().add(FavscreenStarted());
                 Utils.showToast("成功");
@@ -284,7 +283,7 @@ class _BuildItem extends StatelessWidget {
               // Get.find<HeroBuildSharePageController>()
               //     .addToFavorite(heroBuild.tableData.build ?? "");
             },
-            count: heroBuild.tableData.likes!.content!.count!,
+            count: heroBuild.netBuild.count,
           ),
         ],
       ),
@@ -330,10 +329,12 @@ class _SkillTile extends StatelessWidget {
 class _ItemActions extends StatefulWidget {
   const _ItemActions({
     Key? key,
+
+    /// build的objectId
     required this.objectId,
     required this.count,
     required this.creator,
-    required this.likeId,
+    required this.likesId,
     required this.onAdd,
   }) : super(key: key);
 
@@ -341,7 +342,7 @@ class _ItemActions extends StatefulWidget {
 
   final String creator;
   final String objectId;
-  final String likeId;
+  final String likesId;
   final Function() onAdd;
 
   @override
@@ -354,12 +355,12 @@ class _ItemActionsState extends State<_ItemActions> {
   late int count;
   late int type;
 
-  late Map<String, FavoriteTable> favorites;
+  late Map<String, NetFavorite> favorites;
 
   @override
   void initState() {
-    favorites = context.read<API>().favorites;
-    type = favorites[widget.objectId]?.type! ?? 0;
+    favorites = context.read<NetService>().favourites;
+    type = favorites[widget.objectId]?.type ?? 0;
     like = type == 1 ? true : false;
     dislike = type == -1 ? true : false;
     count = context.read<BuildshareBloc>().cacheCount[widget.objectId] ??
@@ -370,55 +371,32 @@ class _ItemActionsState extends State<_ItemActions> {
   Future onClick(BuildContext context, int btnType) async {
     int newType = btnType == type ? 0 : btnType;
     int amount = newType - type;
-    var r = await context.read<API>().doBatch([
+
+    var r = await context.read<NetService>().starBuild(
+          favorites[widget.objectId]?.objectId!,
+          widget.objectId,
+          widget.likesId,
+          newType,
+          amount,
+        );
+
+    setState(() {
+      count += amount;
+      type = newType;
       favorites[widget.objectId] == null
-          ? BatchTask(
-              method: BatchMethod.POST,
-              path: "/1/classes/favorite",
-              body: {
-                "user": Cloud().currentUser.username,
-                "type": newType,
-                "build":
-                    BPointer(className: "hero_build", objectId: widget.objectId)
-                        .toJson(),
-              },
-            )
-          : BatchTask(
-              method: BatchMethod.PUT,
-              path:
-                  "/1/classes/favorite/${favorites[widget.objectId]!.objectId}",
-              body: {
-                "type": newType,
-              },
-            ),
-      BatchTask(
-        method: BatchMethod.PUT,
-        path: "/1/classes/likes/${widget.likeId}",
-        body: {
-          "count": {
-            "__op": "Increment",
-            "amount": amount,
-          },
-        },
-      ),
-    ]);
-    if (r != null) {
-      setState(() {
-        count += amount;
-        type = newType;
-        favorites[widget.objectId] == null
-            ? favorites.addAll({
-                widget.objectId: FavoriteTable(
-                    type: type,
-                    createdAt: (r[0].result as PostResult).createdAt,
-                    objectId: (r[0].result as PostResult).objectId)
-              })
-            : favorites[widget.objectId]!.type = type;
-        context
-            .read<BuildshareBloc>()
-            .add(BuildshareLiked(objectId: widget.objectId, newCount: count));
-      });
-    }
+          ? favorites.addAll({
+              widget.objectId: NetFavorite(
+                buildId: widget.objectId,
+                type: type,
+                user: context.read<NetService>().currentUser!,
+                objectId: r[0].objectId,
+              )
+            })
+          : favorites[widget.objectId]!.type = type;
+      context
+          .read<BuildshareBloc>()
+          .add(BuildshareLiked(objectId: widget.objectId, newCount: count));
+    });
   }
 
   @override
