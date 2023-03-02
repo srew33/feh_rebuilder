@@ -23,8 +23,8 @@ class NetBuildPO extends LCObject implements BaseNetModel {
   NetBuildPO() : super('builds');
 
   @override
-  NetBuild toViewModel() {
-    return NetBuild(
+  NetBuildBusinessModel toBusinessModel() {
+    return NetBuildBusinessModel(
       creator: creator,
       build: PersonBuild.fromNet(this),
       idTag: idTag,

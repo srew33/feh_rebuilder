@@ -1,13 +1,13 @@
 import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
-import 'package:feh_rebuilder/repositories/repository.dart';
+import 'package:feh_rebuilder/repositories/repo_provider.dart';
 import 'package:feh_rebuilder/styles/text_styles.dart';
 import 'package:feh_rebuilder/widgets/uni_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
-class SkillTile extends StatelessWidget {
+class SkillTile extends ConsumerWidget {
   const SkillTile({
     Key? key,
     required this.skill,
@@ -23,11 +23,14 @@ class SkillTile extends StatelessWidget {
   final Function(String idTag)? onClick;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     String iconPath = skill.category == 15
         ? p.join("blessing", "${skill.iconId}.webp")
         : p.join("icons",
             "${skill.category! < 3 ? (skill.category! + 1) : skill.iconId}.webp");
+
+    final repo = ref.watch(repoProvider).requireValue;
+
     return ExpansionTile(
       title: Row(
         children: [
@@ -57,7 +60,7 @@ class SkillTile extends StatelessWidget {
                             "SP:${skill.spCost.toString()}",
                             style: Theme.of(context)
                                 .textTheme
-                                .subtitle2!
+                                .titleSmall!
                                 .merge(const TextStyle(
                                   fontWeight: FontWeight.bold,
                                 )),
@@ -121,7 +124,7 @@ class SkillTile extends StatelessWidget {
                             child: UniImage(
                               path: p
                                   .join("assets", "faces",
-                                      "${context.read<Repository>().cachePersons[skill.rarity3.elementAt(i)]!.faceName}.webp")
+                                      "${repo.cachePersons[skill.rarity3.elementAt(i)]!.faceName}.webp")
                                   .replaceAll(r"\", "/"),
                               height: heroHeight!,
                             ),
@@ -151,7 +154,7 @@ class SkillTile extends StatelessWidget {
                             child: UniImage(
                               path: p
                                   .join("assets", "faces",
-                                      "${context.read<Repository>().cachePersons[skill.rarity4.elementAt(i)]!.faceName}.webp")
+                                      "${repo.cachePersons[skill.rarity4.elementAt(i)]!.faceName}.webp")
                                   .replaceAll(r"\", "/"),
                               height: heroHeight!,
                             ),
@@ -181,7 +184,7 @@ class SkillTile extends StatelessWidget {
                             child: UniImage(
                               path: p
                                   .join("assets", "faces",
-                                      "${context.read<Repository>().cachePersons[skill.rarity5.elementAt(i)]!.faceName}.webp")
+                                      "${repo.cachePersons[skill.rarity5.elementAt(i)]!.faceName}.webp")
                                   .replaceAll(r"\", "/"),
                               height: heroHeight!,
                             ),

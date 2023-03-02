@@ -12,7 +12,7 @@ class NetTagsPO extends LCObject implements BaseNetModel {
   NetTagsPO() : super('tags');
 
   @override
-  toViewModel() {
+  toBusinessModel() {
     // TODO: implement toViewModel
     throw UnimplementedError();
   }

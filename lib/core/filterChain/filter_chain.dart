@@ -1,15 +1,15 @@
 import '../filters/filter.dart';
 
-class FilterChain<T, N> {
+class FilterChain<T, N, M> {
   List<T> input;
   // List output = [];
-  List<Filter<T, N>> filters;
+  List<Filter<T, N, M>> filters;
 
   // SameTypeMode mode;
 
   FilterChain({required this.input, required this.filters});
 
-  void add(Filter<T, N> filter) {
+  void add(Filter<T, N, M> filter) {
     filters.add(filter);
   }
 
@@ -21,9 +21,9 @@ class FilterChain<T, N> {
     filters.remove(filter);
   }
 
-  List<T> get output {
-    List<T> out = input;
-    for (Filter<T, N> filter in filters) {
+  List<T?> get output {
+    List<T?> out = input;
+    for (Filter<T?, N, M> filter in filters) {
       filter.input = out;
       out = filter.output;
     }

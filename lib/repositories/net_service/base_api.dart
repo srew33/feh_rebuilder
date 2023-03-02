@@ -5,9 +5,9 @@ abstract class BaseNetService {
   String? get currentUser;
 
   /// k:build的objectId,v:favourite
-  Map<String, NetFavorite> get favourites;
+  Map<String, NetFavoriteBusinessModel> get favourites;
 
-  set favourites(Map<String, NetFavorite> value);
+  set favourites(Map<String, NetFavoriteBusinessModel> value);
 
   bool get isInitialed;
 
@@ -17,20 +17,19 @@ abstract class BaseNetService {
 
   set tags(Map<String, String> value);
 
-  Future<void> delWebBuild(NetBuild idTag);
-  Future<List<NetBuild>> getWebBuilds(String idTag);
+  Future checkUpdate(int currentAppVersion, int currentDbVersion);
 
-  Future initService();
+  Future<void> delWebBuild(String objectId);
+
+  Future<List<NetBuildBusinessModel>> getWebBuilds(String idTag);
+
+  Future<BaseNetService> initService();
 
   Future login();
 
   Future regist();
 
   Future restoreDevice(String oldDeviceId);
-
-  Future uploadBuild(String idTag, List build, List<String>? tags);
-
-  Future checkUpdate(int currentAppVersion, int currentDbVersion);
 
   Future starBuild(
     String? favId,
@@ -39,4 +38,6 @@ abstract class BaseNetService {
     int newType,
     int amount,
   );
+
+  Future uploadBuild(String idTag, List build, List<String>? tags);
 }

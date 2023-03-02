@@ -1,5 +1,5 @@
-enum StateStatus {
+enum PageStatus {
   initial,
-  success,
+  normal,
   error,
 }

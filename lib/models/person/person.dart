@@ -1,3 +1,5 @@
+import 'package:feh_rebuilder/models/base/person_base.dart';
+
 import 'dragonflowers.dart';
 import 'growth_rates.dart';
 import 'json_person.dart';
@@ -5,7 +7,7 @@ import 'legendary.dart';
 import 'skills.dart';
 import 'stats.dart';
 
-class Person extends JsonPerson {
+class Person extends JsonPerson implements BasePerson {
   int minRarity;
   int maxRarity;
   int type;
@@ -159,4 +161,7 @@ class Person extends JsonPerson {
   String toString() {
     return idTag ?? "null";
   }
+
+  @override
+  Person get person => this;
 }

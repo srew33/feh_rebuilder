@@ -1,5 +1,6 @@
 import 'package:feh_rebuilder/core/enum/move_type.dart';
 import 'package:feh_rebuilder/core/enum/weapon_type.dart';
+import 'package:feh_rebuilder/models/base/skill_base.dart';
 import 'package:flutter/foundation.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
 
@@ -34,9 +35,9 @@ enum SkillFilterType {
   moveEffect,
 }
 
-class SkillFilter implements Filter<Skill, SkillFilterType> {
+class SkillFilter implements Filter<BaseSkill, SkillFilterType, Skill> {
   @override
-  List<Skill> input = [];
+  List<BaseSkill> input = [];
 
   @override
   SkillFilterType filterType;
@@ -60,11 +61,11 @@ class SkillFilter implements Filter<Skill, SkillFilterType> {
   SkillFilter({required this.filterType, this.valid});
 
   @override
-  List<Skill> get output {
-    List<Skill> output = [];
+  List<BaseSkill> get output {
+    List<BaseSkill> output = [];
 
-    for (Skill t in input) {
-      if (filtFunc(t)) {
+    for (BaseSkill t in input) {
+      if (filtFunc(t.skill)) {
         output.add(t);
       }
     }

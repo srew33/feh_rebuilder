@@ -1,7 +1,7 @@
 import 'base.dart';
 
-class NetLikes extends BaseShareModel {
-  NetLikes({
+class NetLikesBusinessModel extends BaseNetBusinessModel {
+  NetLikesBusinessModel({
     required this.count,
     super.acl,
     super.objectId,

@@ -1,14 +1,8 @@
-import 'package:feh_rebuilder/home_screens/favourites/bloc/favscreen_bloc.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
-import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
-import 'package:feh_rebuilder/pages/hero_detail/page.dart';
 import 'package:feh_rebuilder/widgets/uni_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path/path.dart' as p;
-
-import '../utils.dart';
 
 /// 英雄信息显示的tile
 class PersonTile extends StatelessWidget {
@@ -18,34 +12,21 @@ class PersonTile extends StatelessWidget {
     required this.showVersion,
     required this.person,
     required this.sum,
+    required this.onClick,
   }) : super(key: key);
 
   /// 是否显示人物登场游戏版本
   final bool showVersion;
   final Person person;
   final String sum;
+  final Function() onClick;
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
       child: InkWell(
-        onTap: () async {
-          Utils.debug(person.idTag!);
-          FavscreenBloc bloc = context.read<FavscreenBloc>();
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => HeroDetailPage(
-                hero: person,
-                favBloc: bloc,
-                initialBuild: PersonBuild(
-                  personTag: person.idTag!,
-                  equipSkills: const [],
-                ),
-              ),
-            ),
-          );
-        },
+        onTap: () => onClick.call(),
         child: Row(
           children: [
             Padding(

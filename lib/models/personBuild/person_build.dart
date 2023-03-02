@@ -1,9 +1,13 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:equatable/equatable.dart';
+
 import 'package:feh_rebuilder/repositories/net_service/cloud_object/build_table.dart';
 
 import '../../utils.dart';
 
 class PersonBuild extends Equatable {
+  // 对应数据库中的key，是时间戳的字符串
+  final String? key;
   final String personTag;
   final String? advantage;
   final String? disAdvantage;
@@ -13,11 +17,6 @@ class PersonBuild extends Equatable {
   final bool resplendent;
   final bool summonerSupport;
   final List<String?> equipSkills;
-
-  @Deprecated(
-    '竞技场分数，弃用',
-  )
-  final int arenaScore;
 
   /// 弃用
   final int timeStamp;
@@ -29,6 +28,7 @@ class PersonBuild extends Equatable {
   final String remark;
 
   const PersonBuild({
+    this.key,
     required this.personTag,
     this.advantage,
     this.disAdvantage,
@@ -38,7 +38,6 @@ class PersonBuild extends Equatable {
     this.resplendent = false,
     this.summonerSupport = false,
     required this.equipSkills,
-    this.arenaScore = 0,
     this.timeStamp = 0,
     this.custom = false,
     this.ascendedAsset,
@@ -46,7 +45,9 @@ class PersonBuild extends Equatable {
     this.remark = '',
   });
 
-  factory PersonBuild.fromJson(Map<String, dynamic> json) => PersonBuild(
+  factory PersonBuild.fromJson(String? key, Map<String, dynamic> json) =>
+      PersonBuild(
+        key: key,
         personTag: json['id_tag'] as String,
         advantage: json['advantage'] as String?,
         disAdvantage: json['disAdvantage'] as String?,
@@ -56,7 +57,6 @@ class PersonBuild extends Equatable {
         resplendent: json['resplendent'] as bool,
         custom: json['custom'] as bool? ?? false,
         summonerSupport: json['summoner_support'] as bool,
-        arenaScore: json['arena_score'] as int? ?? 0,
         timeStamp: json['time_stamp'] as int? ?? 0,
         equipSkills: (json['equip_skills'] as List<dynamic>).cast<String?>(),
         ascendedAsset: json['ascendedAsset'] as String?,
@@ -74,7 +74,6 @@ class PersonBuild extends Equatable {
         'resplendent': resplendent,
         'summoner_support': summonerSupport,
         'equip_skills': equipSkills,
-        "arena_score": arenaScore,
         "custom": custom,
         "time_stamp": timeStamp,
         'ascendedAsset': ascendedAsset,

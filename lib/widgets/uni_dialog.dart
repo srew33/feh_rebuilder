@@ -1,3 +1,4 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -6,13 +7,15 @@ class UniDialog extends StatelessWidget {
   const UniDialog({
     Key? key,
     this.onComfirm,
+    this.onCancel,
     this.body,
-    this.secondConfirm = false,
-    this.confirmText = "确定",
     required this.title,
+    this.confirmText = "确定",
+    this.secondConfirm = false,
   }) : super(key: key);
 
   final FutureOr<void> Function()? onComfirm;
+  final FutureOr<void> Function()? onCancel;
 
   final Widget? body;
 
@@ -44,7 +47,10 @@ class UniDialog extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: (() => Navigator.of(context).pop()),
+              onPressed: () {
+                onCancel?.call();
+                Navigator.of(context).pop();
+              },
               child: const Text(
                 "取消",
               ),

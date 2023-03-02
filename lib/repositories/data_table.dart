@@ -12,7 +12,6 @@ abstract class DataTable<T, N> {
   bool get readOnly;
 
   Future<Map<T, N>> getAll() async {
-    // return (await _table.find(db)).map((e) => e.value);
     return Map.fromEntries(
         (await _table.find(db)).map((e) => MapEntry(e.key, e.value)));
   }
@@ -26,6 +25,13 @@ abstract class DataTable<T, N> {
       throw UnsupportedError("${_table.name}是一个只读表");
     }
     await _table.record(key).delete(db);
+  }
+
+  Future deleteSome(Iterable<T> keys) async {
+    if (readOnly) {
+      throw UnsupportedError("${_table.name}是一个只读表");
+    }
+    await _table.records(keys).delete(db);
   }
 
   Future drop() async {
@@ -99,20 +105,30 @@ class FavouritesTable extends DataTable<String, dynamic> {
   @override
   bool get readOnly => false;
 
-  Future<void> delFav(String? key) async {
-    if (key == null) {
-      await _table.drop(db);
-    } else {
-      await _table.record(key).delete(db);
-    }
-  }
+  // Future<void> delOne(String key) async {
+  //   await _table.record(key).delete(db);
+  // }
+
+  // Future<void> drop() async {
+  //   await drop();
+  // }
+}
+
+class ArenaTeamTable extends DataTable<String, dynamic> {
+  ArenaTeamTable({required Database db}) : super(db: db);
+
+  @override
+  StoreRef<String, Map<String, dynamic>> get _table => StoreRef("arenaTeam");
+
+  @override
+  bool get readOnly => false;
 }
 
 class ConfigTable extends DataTable<String, dynamic> {
   ConfigTable({required Database db}) : super(db: db);
 
   @override
-  StoreRef<String, dynamic> get _table => StoreRef("config");
+  StoreRef<String, List<String?>> get _table => StoreRef("config");
 
   @override
   bool get readOnly => false;

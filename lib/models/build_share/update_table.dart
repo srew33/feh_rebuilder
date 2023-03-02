@@ -1,7 +1,7 @@
 import 'package:feh_rebuilder/models/build_share/base.dart';
 
-class UpdateTable extends BaseShareModel {
-  UpdateTable({
+class UpdateTableBusinessModel extends BaseNetBusinessModel {
+  UpdateTableBusinessModel({
     required this.id,
     required this.type,
     required this.info,
@@ -10,6 +10,7 @@ class UpdateTable extends BaseShareModel {
     required this.alias,
     required this.url,
     required this.checksum,
+    required this.downloadSecret,
     super.acl,
     super.createdAt,
     super.objectId,
@@ -23,6 +24,7 @@ class UpdateTable extends BaseShareModel {
   String alias;
   String url;
   String checksum;
+  String downloadSecret;
 
   // @override
   // void fromJson(Map<String, dynamic> json) {

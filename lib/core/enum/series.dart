@@ -14,7 +14,8 @@ enum SeriesEnum {
   Awakening,
   Fates,
   Three_Houses,
-  FE_Encore
+  FE_Encore,
+  Engage
 // Fire Emblem Heroes
 // Fire Emblem: Mystery of the Emblem
 // Fire Emblem: New Mystery of the Emblem (mixed in with Fire Emblem: Mystery of the Emblem and Fire Emblem: Shadow Dragon and the Blade of Light)
@@ -64,6 +65,8 @@ extension SeriesEnumExtension on SeriesEnum {
         return "火焰之纹章：风花雪月";
       case SeriesEnum.FE_Encore:
         return "幻影异闻录";
+      case SeriesEnum.Engage:
+        return "ENGAGE";
     }
   }
 }

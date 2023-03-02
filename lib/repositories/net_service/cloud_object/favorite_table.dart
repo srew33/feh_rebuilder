@@ -16,8 +16,8 @@ class NetFavouritePO extends LCObject implements BaseNetModel {
   NetFavouritePO() : super('favourite');
 
   @override
-  NetFavorite toViewModel() {
-    return NetFavorite(
+  NetFavoriteBusinessModel toBusinessModel() {
+    return NetFavoriteBusinessModel(
       buildId: build.objectId!,
       user: user,
       type: type,

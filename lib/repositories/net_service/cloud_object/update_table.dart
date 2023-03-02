@@ -28,18 +28,23 @@ class NetUpdateInfoPO extends LCObject implements BaseNetModel {
   String get url => this['url'];
   set url(String value) => this['url'] = value;
 
+  String get downloadSecret => this['download_secret'] ?? "";
+  set downloadSecret(String value) => this['download_secret'] = value;
+
   NetUpdateInfoPO() : super('update_info');
 
   @override
-  UpdateTable toViewModel() {
-    return UpdateTable(
-        id: id,
-        type: type,
-        info: info,
-        serverVersion: serverVersion,
-        minimalVersion: minimalVersion,
-        alias: alias,
-        url: url,
-        checksum: checksum);
+  UpdateTableBusinessModel toBusinessModel() {
+    return UpdateTableBusinessModel(
+      id: id,
+      type: type,
+      info: info,
+      serverVersion: serverVersion,
+      minimalVersion: minimalVersion,
+      alias: alias,
+      url: url.trim(),
+      checksum: checksum.trim(),
+      downloadSecret: downloadSecret.trim(),
+    );
   }
 }

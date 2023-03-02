@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:path/path.dart' as p;
+// ignore: depend_on_referenced_packages
 import 'package:pointycastle/export.dart'
     hide Signer
     hide RSASigner
@@ -107,10 +108,20 @@ class Utils {
 
     // 获得降序后的属性字典，数值相同时key按key列表的升序
     // 这里假定了base_stats一定是按顺序排列的
-    var sortedStats = base_stats.entries.toList();
+    // https://www.reddit.com/r/FireEmblemHeroes/comments/1160n4d/broken_expectations_in_stat_increases_from
+    // 说明了突破和神龙之花在计算属性时将HP固定在第一位，因此这里在计算排序列表时也将HP属性固定在第一位即可
+
+    // 跳过HP属性
+    var sortedStats = base_stats.entries.skip(1).toList();
+
     sortedStats.sort((a, b) {
+      // 根据官方文档，排序函数不能保证是稳定的，因此比较为相等的不同对象可能以任何顺序出现在结果中
+      // 因此这里相等时要手动限制，>0时元素会交换，<0则不会交换
       return a.value != b.value ? b.value.compareTo(a.value) : -1;
     });
+
+    // 固定HP属性到第一个
+    sortedStats.insert(0, MapEntry("hp", base_stats["hp"]!));
 
     // 计算X星属性逻辑为以3星为基础，1/5星直接-1/+1
     // 4星在3星基础上取除了hp外最高的两个+1，
@@ -387,7 +398,7 @@ class Utils {
       List<Map<String, dynamic>> favourites =
           (data["favorites"] as List).cast<Map<String, dynamic>>();
       Iterable<PersonBuild> transformed =
-          favourites.map((e) => PersonBuild.fromJson(e));
+          favourites.map((e) => PersonBuild.fromJson(null, e));
       await favouritesTable.addAll(
           transformed.map((e) => e.timeStamp.toString()), favourites);
       debug("恢复成功");

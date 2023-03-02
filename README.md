@@ -17,7 +17,8 @@ flutter 版本：一般使用最新版本
 1. 自行生成一对 RSA 密钥，公钥放在 assets\update.pub，开发必须，仅运行的话生成一个空文件即可
 2. flutter pub get
 3. PC端需要将[sqlite3.dll](https://github.com/tekartik/sqflite/raw/master/sqflite_common_ffi/lib/src/windows/sqlite3.dll)放到exe的同一文件夹中，参考[sqflite_common_ffi | Dart Package (flutter-io.cn)](https://pub.flutter-io.cn/packages/sqflite_common_ffi)的说明
-4. 编译运行
+4. 根据需要自行编写有关网络服务的实现
+5. 编译运行
 
 **Web端**
 

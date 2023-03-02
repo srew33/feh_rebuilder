@@ -32,7 +32,7 @@ apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 33
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -76,11 +76,13 @@ android {
         debug {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            applicationIdSuffix ".debug"
+            // ! 正式版要修改
+            applicationIdSuffix ".beta"
             signingConfig signingConfigs.debug
             println "Signing with debug keys"
         }
         release {
+            // ! 正式版要修改
             // applicationIdSuffix ".beta"
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release

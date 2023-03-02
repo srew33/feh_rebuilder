@@ -1,27 +1,26 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
-import 'package:android_id/android_id.dart';
-import 'package:crypto/crypto.dart';
 import 'package:feh_rebuilder/models/build_share/build_table.dart';
 import 'package:feh_rebuilder/models/build_share/favorite_table.dart';
 import 'package:feh_rebuilder/repositories/net_service/base_api.dart';
-import 'package:feh_rebuilder/repositories/net_service/cloud_object/favorite_table.dart';
-import 'package:feh_rebuilder/repositories/net_service/cloud_object/likes.dart';
-import 'package:feh_rebuilder/repositories/net_service/cloud_object/tags.dart';
 import 'package:feh_rebuilder/repositories/net_service/cloud_object/update_table.dart';
-import 'package:feh_rebuilder/utils.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:leancloud_storage/leancloud.dart';
 
-import 'cloud_object/build_table.dart';
+final netProvider = Provider<NetService>((ref) {
+  return NetService(ref);
+});
 
 class NetService implements BaseNetService {
+  NetService(this.ref);
+
+  ProviderRef<NetService> ref;
+
   @override
   bool isInitialed = false;
 
   @override
-  Map<String, NetFavorite> favourites = {};
+  Map<String, NetFavoriteBusinessModel> favourites = {};
 
   @override
   Map<String, String> tags = {};
@@ -34,11 +33,17 @@ class NetService implements BaseNetService {
   @override
   Future<List<NetUpdateInfoPO>?> checkUpdate(
       int currentAppVersion, int currentDbVersion) async {
-    throw UnimplementedError();
+    List<NetUpdateInfoPO>? r = await _intercept(
+      () async {
+        throw UnimplementedError();
+      },
+      false,
+    );
+    return r;
   }
 
   @override
-  Future<void> delWebBuild(NetBuild netBuild) async {
+  Future<void> delWebBuild(String objectId) async {
     throw UnimplementedError();
   }
 
@@ -47,17 +52,16 @@ class NetService implements BaseNetService {
   }
 
   Future<List<String?>> getCurrentUser() async {
-    var user = await LCUser.getCurrent();
-    return [user?.username, user?.password];
-  }
-
-  @override
-  Future<List<NetBuild>> getWebBuilds(String idTag) async {
     throw UnimplementedError();
   }
 
   @override
-  Future<void> initService() async {
+  Future<List<NetBuildBusinessModel>> getWebBuilds(String idTag) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<NetService> initService() async {
     throw UnimplementedError();
   }
 
@@ -77,6 +81,17 @@ class NetService implements BaseNetService {
   }
 
   @override
+  Future<List<LCObject>> starBuild(
+    String? favId,
+    String buildId,
+    String likesId,
+    int newType,
+    int amount,
+  ) async {
+    throw UnimplementedError();
+  }
+
+  @override
   Future<void> uploadBuild(String idTag, List build, List<String>? tags) async {
     throw UnimplementedError();
   }
@@ -87,17 +102,6 @@ class NetService implements BaseNetService {
   }
 
   Future<void> _refreshCache() async {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<LCObject>> starBuild(
-    String? favId,
-    String buildId,
-    String likesId,
-    int newType,
-    int amount,
-  ) async {
     throw UnimplementedError();
   }
 }

@@ -1,4 +1,4 @@
-abstract class Filter<T, N> {
+abstract class Filter<T, N, M> {
   // set input(List<T?> data);
   List<T> input;
 
@@ -10,5 +10,5 @@ abstract class Filter<T, N> {
 
   List<T> get output;
 
-  bool filtFunc(T element);
+  bool filtFunc(M element);
 }

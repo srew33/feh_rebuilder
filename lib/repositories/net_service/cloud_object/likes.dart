@@ -9,7 +9,7 @@ class NetLikesPO extends LCObject implements BaseNetModel {
   NetLikesPO() : super('likes');
 
   @override
-  toViewModel() {
+  toBusinessModel() {
     // TODO: implement toViewModel
     throw UnimplementedError();
   }

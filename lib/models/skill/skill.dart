@@ -1,7 +1,9 @@
+import 'package:feh_rebuilder/models/base/skill_base.dart';
+
 import '../person/stats.dart';
 import 'json_skill.dart';
 
-class Skill extends JsonSkill {
+class Skill extends JsonSkill implements BaseSkill {
   bool isSkillAccessory;
   Set<String> rarity1;
   Set<String> rarity2;
@@ -351,4 +353,7 @@ class Skill extends JsonSkill {
   int get hashCode {
     return idTag.hashCode;
   }
+
+  @override
+  Skill get skill => this;
 }

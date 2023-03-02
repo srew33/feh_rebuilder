@@ -1,6 +1,9 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/widgets.dart';
 
-import 'package:feh_rebuilder/repositories/repository.dart';
+class My18nData {
+  static Map<String, String> transDict = {};
+}
 
 /// 参考i18n_extension核心代码实现的一个简单的翻译组件
 ///
@@ -9,17 +12,19 @@ class MyI18nWidget extends StatefulWidget {
   const MyI18nWidget({
     Key? key,
     required this.child,
-    required this.startLocale,
+    required this.initialLocale,
+    this.initialData,
     required this.translationLoader,
   }) : super(key: key);
   final Widget child;
-  final Locale startLocale;
+  final Locale initialLocale;
+  final Map<String, String>? initialData;
   final TranslationLoader translationLoader;
 
   @override
-  State<MyI18nWidget> createState() => MyI18nWidgetState();
+  State<MyI18nWidget> createState() => MyI18nState();
 
-  static MyI18nWidgetState of(BuildContext context) {
+  static MyI18nState of(BuildContext context) {
     _InheritedI18n? inherited =
         context.dependOnInheritedWidgetOfExactType<_InheritedI18n>();
 
@@ -31,12 +36,19 @@ class MyI18nWidget extends StatefulWidget {
   }
 }
 
-class MyI18nWidgetState extends State<MyI18nWidget> {
+class MyI18nState extends State<MyI18nWidget> {
+  late Locale current;
+
   set locale(Locale newLocale) {
-    widget.translationLoader
-        .load(newLocale)
-        .then((value) => Repository.translationData = value);
-    setState(() {});
+    if (current != newLocale) {
+      () async {
+        My18nData.transDict = await widget.translationLoader.load(newLocale);
+
+        setState(() {});
+      }();
+
+      current = newLocale;
+    }
   }
 
   void _rebuildAllChildren() {
@@ -46,6 +58,16 @@ class MyI18nWidgetState extends State<MyI18nWidget> {
     }
 
     (context as Element).visitChildren(rebuild);
+  }
+
+  @override
+  void initState() {
+    current = widget.initialLocale;
+    if (widget.initialData != null) {
+      My18nData.transDict = widget.initialData!;
+    }
+
+    super.initState();
   }
 
   @override
@@ -59,7 +81,7 @@ class MyI18nWidgetState extends State<MyI18nWidget> {
 }
 
 class _InheritedI18n extends InheritedWidget {
-  final MyI18nWidgetState data;
+  final MyI18nState data;
 
   const _InheritedI18n({
     Key? key,
@@ -75,13 +97,13 @@ abstract class TranslationLoader {
   Future<Map<String, String>> load(Locale newLocale);
 }
 
-class MyTranslationLoader extends TranslationLoader {
-  final Repository repo;
-  MyTranslationLoader({
-    required this.repo,
-  });
-  @override
-  Future<Map<String, String>> load(Locale newLocale) async {
-    return await repo.loadTranslationData(newLocale);
-  }
-}
+// class MyTranslationLoader extends TranslationLoader {
+//   final Repository repo;
+//   MyTranslationLoader({
+//     required this.repo,
+//   });
+//   @override
+//   Future<Map<String, String>> load(Locale newLocale) async {
+//     return await repo.loadTranslationData(newLocale);
+//   }
+// }
