@@ -51,6 +51,12 @@ class MyI18nState extends State<MyI18nWidget> {
     }
   }
 
+  Future<void> refresh() async {
+    My18nData.transDict = await widget.translationLoader.load(current);
+
+    setState(() {});
+  }
+
   void _rebuildAllChildren() {
     void rebuild(Element el) {
       el.markNeedsBuild();

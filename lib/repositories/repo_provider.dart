@@ -7,6 +7,7 @@ import 'package:feh_rebuilder/core/platform_info.dart';
 import 'package:feh_rebuilder/env_provider.dart';
 import 'package:feh_rebuilder/my_18n/widget.dart';
 import 'package:feh_rebuilder/repositories/config_provider.dart';
+import 'package:feh_rebuilder/repositories/data_table.dart';
 import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter/foundation.dart';
@@ -17,16 +18,26 @@ import 'package:path/path.dart' as p;
 import 'data_provider.dart';
 
 final repoProvider = FutureProvider<Repository>((ref) async {
-  Repository repo = await loadRepo();
+  UserDb userDb = await UserDb(p.join(EnvProvider.rootDir, "user.db")).init();
+
+  ConfigTable configTable_ = ConfigTable(db: userDb.db);
+
+  Config initialConfig = Config.fromJson(await configTable_.getAllRaw());
+
+  ref.read(configProvider.notifier).update((state) => initialConfig);
+
+  GameDb gameDb = await loadGameDb(initialConfig.allowCustomGameDB);
+
+  Repository repo = Repository(
+    gameDb: gameDb,
+    userDb: userDb,
+  );
+  // await repo.initCaches();
 
   if (repo.gameDb.isFirstInitial) {
     // 尝试恢复老版本收藏数据
     await Utils.restoreOldVersionFavs(repo.favourites);
   }
-
-  Config initialConfig = Config.fromJson(await repo.config.getAll());
-
-  ref.read(configProvider.notifier).update((state) => initialConfig);
 
   My18nData.transDict =
       await repo.loadTranslationData(initialConfig.dataLanguage.locale);
@@ -34,7 +45,19 @@ final repoProvider = FutureProvider<Repository>((ref) async {
   return repo;
 });
 
-Future<GameDb> loadDb() async {
+Future<GameDb> loadGameDb(bool useCustomDB) async {
+  if (useCustomDB) {
+    var c = File(p.join(EnvProvider.rootDir, "custom.db"));
+    var g = File(p.join(EnvProvider.rootDir, "feh.db"));
+    // 如果custom.db 不存在，把feh.db复制过来
+    if (!c.existsSync() && g.existsSync()) {
+      await g.copy(c.path);
+    }
+    GameDb gameDb =
+        await GameDb(p.join(EnvProvider.rootDir, "custom.db")).init();
+    return gameDb;
+  }
+
   GameDb gameDb = await GameDb(p.join(EnvProvider.rootDir, "feh.db")).init();
   if (gameDb.db.version < EnvProvider.builtinDbVersion) {
     Utils.debug(
@@ -71,19 +94,7 @@ Future<GameDb> loadDb() async {
 
     var data = jsonDecode(utf8.decode(bytes));
 
-    await gameDb.updateDb(data);
+    await gameDb.initialDb(data);
   }
   return gameDb;
-}
-
-Future<Repository> loadRepo() async {
-  GameDb gameDb = await loadDb();
-  UserDb userDb = await UserDb(p.join(EnvProvider.rootDir, "user.db")).init();
-  Repository repo = Repository(
-    gameDb: gameDb,
-    userDb: userDb,
-  );
-  await repo.initCaches();
-
-  return repo;
 }

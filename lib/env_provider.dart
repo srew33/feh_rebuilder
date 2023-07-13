@@ -17,13 +17,13 @@ class EnvProvider {
   static late final String tempDir;
 
   /// 程序版本
-  static const String appVersion = "1.4.0";
+  static const String appVersion = "1.5.0";
 
   /// 内建数据版本,必须与data.bin保持一致
-  static const int builtinDbVersion = 1677730221322;
+  static const int builtinDbVersion = 1688691870196;
 
   /// app版本
-  static const int appVersionCode = 40;
+  static const int appVersionCode = 50;
 
   static Future<void> init() async {
     platformType = PlatformInfo().getCurrentPlatformType();

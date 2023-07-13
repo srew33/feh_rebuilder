@@ -1,11 +1,12 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'package:feh_rebuilder/core/enum/page_state.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/pages/build_share/ui.dart';
 import 'package:feh_rebuilder/pages/fav/body/first/controller.dart';
 import 'package:feh_rebuilder/pages/hero_detail/controller.dart';
 import 'package:feh_rebuilder/pages/hero_detail/widgets/attr_tile.dart';
+import 'package:feh_rebuilder/pages/local_builds/ui.dart';
+import 'package:feh_rebuilder/repositories/config_provider.dart';
 import 'package:feh_rebuilder/repositories/net_service/service.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:feh_rebuilder/widgets/uni_dialog.dart';
@@ -18,41 +19,33 @@ import 'widgets/skill_tile.dart';
 import 'widgets/tiles.dart';
 
 class HeroDetailPage extends ConsumerWidget {
-  const HeroDetailPage({required this.initialState, this.favKey, super.key});
+  const HeroDetailPage({required this.family, this.favKey, super.key});
 
   /// 初始化的build
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   final String? favKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(
-        heroDetailPageProvider(initialState).select((value) => value.status));
-    if (status == PageStatus.initial) {
-      return Scaffold(
-        appBar: AppBar(),
-      );
-    }
-
     return Scaffold(
       appBar: _AppBar(
-        initialState,
+        family,
         favKey,
       ),
       body: _Body(
-        initialState,
+        family,
       ),
     );
   }
 }
 
-class _AppBar extends ConsumerWidget with PreferredSizeWidget {
+class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
   const _AppBar(
-    this.initialState,
+    this.family,
     this.favKey,
   );
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   final String? favKey;
 
@@ -70,9 +63,12 @@ class _AppBar extends ConsumerWidget with PreferredSizeWidget {
           builder: (context) {
             return UniDialog(
               title: "添加标签",
-              body: TagChoose(
-                data: netService.tags,
-                selected: selected,
+              body: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TagChoose(
+                  data: netService.tags,
+                  selected: selected,
+                ),
               ),
               onComfirm: () {
                 Navigator.of(context).pop();
@@ -87,7 +83,7 @@ class _AppBar extends ConsumerWidget with PreferredSizeWidget {
       }
       if (selected.value.isNotEmpty) {
         PersonBuild current =
-            ref.read(heroDetailPageProvider(initialState)).currentBuild;
+            ref.read(heroDetailPageProvider(family)).requireValue.currentBuild;
         await netService.uploadBuild(
           current.personTag,
           current.toNetBuild(),
@@ -100,21 +96,21 @@ class _AppBar extends ConsumerWidget with PreferredSizeWidget {
 
   Future<void> save(WidgetRef ref) async {
     await ref.read(favFirstProvider.notifier).saveBuild(
-          build: ref.read(heroDetailPageProvider(initialState)).currentBuild,
+          build: ref
+              .read(heroDetailPageProvider(family))
+              .requireValue
+              .currentBuild,
           key: favKey,
         );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final heroId = ref.watch(heroDetailPageProvider(initialState)
-        .select((value) => value.hero.idTag ?? ""));
-
     return AppBar(
-      title: heroId.isEmpty
-          ? null
+      title: family.personTag.isEmpty
+          ? const SizedBox.shrink()
           : Text(
-              """${"MPID_HONOR_${heroId.split("_")[1]}".tr} ${"MPID_${heroId.split("_")[1]}".tr}"""),
+              """${"MPID_HONOR_${family.personTag.split("_")[1]}".tr} ${"MPID_${family.personTag.split("_")[1]}".tr}"""),
       actions: [
         if (!kIsWeb)
           PopupMenuButton(
@@ -125,6 +121,10 @@ class _AppBar extends ConsumerWidget with PreferredSizeWidget {
                     Utils.showToast("收藏完成");
                     break;
                   case HerodetailAction.upload:
+                    if (ref.read(configProvider).allowCustomGameDB) {
+                      Utils.showToast("使用自定义数据时不允许上传数据");
+                      return;
+                    }
                     await upload(context, ref);
 
                     break;
@@ -132,9 +132,10 @@ class _AppBar extends ConsumerWidget with PreferredSizeWidget {
                     await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) =>
-                            HeroBuildSharePage(heroTag: heroId),
+                            HeroBuildSharePage(heroTag: family.personTag),
                       ),
                     );
+
                     break;
                   default:
                 }
@@ -153,15 +154,36 @@ class _AppBar extends ConsumerWidget with PreferredSizeWidget {
                       child: Text("网上配置"),
                     ),
                   ]),
-        // todo
         if (kIsWeb)
-          IconButton(
-              onPressed: () async {
-                await save(ref);
+          PopupMenuButton(
+              onSelected: (HerodetailAction value) async {
+                switch (value) {
+                  case HerodetailAction.save:
+                    await save(ref);
+                    Utils.showToast("收藏完成");
+                    break;
+                  case HerodetailAction.webBuild:
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            LocalBuildsPage(heroTag: family.personTag),
+                      ),
+                    );
+
+                    break;
+                  default:
+                }
               },
-              icon: favKey == null
-                  ? const Icon(Icons.favorite_border)
-                  : const Icon(Icons.save))
+              itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: HerodetailAction.save,
+                      child: Text(favKey == null ? "收藏" : "保存"),
+                    ),
+                    const PopupMenuItem(
+                      value: HerodetailAction.webBuild,
+                      child: Text("参考配置"),
+                    ),
+                  ])
       ],
     );
   }
@@ -170,32 +192,40 @@ class _AppBar extends ConsumerWidget with PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
 
-class _Body extends StatelessWidget {
+class _Body extends ConsumerWidget {
   const _Body(
-    this.initialState,
+    this.family,
   );
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: ListTile.divideTiles(context: context, tiles: [
-        // 头像、性格等，
-        AttrTile(initialState),
-        RarityTile(initialState),
-        LevelSwitchTile(initialState),
-        SummonSupportTile(initialState),
-        ResplendentTile(initialState),
-        AscendedAssetTile(initialState),
-        // // 数值显示组件
-        StatsTile(initialState),
-        // // 特殊效果组件
-        LegendaryTile(initialState),
-        // // 武器炼成组件
-        WeaponRefineTile(initialState),
-        SkillTiles(initialState),
-      ]).toList(),
+  Widget build(BuildContext context, WidgetRef ref) {
+    var s = ref.watch(heroDetailPageProvider(family));
+
+    return s.when(
+      data: (data) => ListView(
+        children: ListTile.divideTiles(context: context, tiles: [
+          // 头像、性格等，
+          AttrTile(family),
+          RarityTile(family),
+          LevelSwitchTile(family),
+          SummonSupportTile(family),
+          ResplendentTile(family),
+          AscendedAssetTile(family),
+          // // 数值显示组件
+          StatsTile(family),
+          // // 特殊效果组件
+          LegendaryTile(family),
+          // // 武器炼成组件
+          WeaponRefineTile(family),
+          SkillTiles(family),
+        ]).toList(),
+      ),
+      error: (error, stackTrace) => Center(
+        child: Text(error.toString()),
+      ),
+      loading: () => const SizedBox.shrink(),
     );
   }
 }
@@ -222,9 +252,11 @@ class TagChooseState extends State<TagChoose> {
         for (var entry in widget.data.entries)
           ValueListenableBuilder(
             valueListenable: widget.selected,
-            builder: (context, selected, child) => ChoiceChip(
+            builder: (context, selected, child) => FilterChip(
               label: Text(entry.value),
-              selected: (selected as List<String>).contains(entry.key),
+              selected: (selected).contains(entry.key),
+              showCheckmark: false,
+              selectedColor: Colors.blue.shade200,
               onSelected: (value) {
                 setState(() {
                   selected.contains(entry.key)

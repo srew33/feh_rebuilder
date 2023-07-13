@@ -1,3 +1,5 @@
+// ignore_for_file: unused_import
+
 import 'package:feh_rebuilder/core/enum/move_type.dart';
 import 'package:feh_rebuilder/core/enum/weapon_type.dart';
 import 'package:feh_rebuilder/core/filters/skill.dart';
@@ -20,25 +22,21 @@ import '../ui.dart';
 
 class SkillTiles extends ConsumerWidget {
   /// 技能配置的列表项
-  const SkillTiles(this.initialState, {Key? key}) : super(key: key);
+  const SkillTiles(this.family, {Key? key}) : super(key: key);
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   Future<void> toAnotherHero(
       BuildContext context, String heroId, Repository repo) async {
-    var initial = await HerodetailState.initial(
-        PersonBuild(
-          personTag: heroId,
-          equipSkills: const [],
-        ),
-        repo);
-
     if (context.mounted) {
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => HeroDetailPage(
             favKey: null,
-            initialState: initial,
+            family: PersonBuild(
+              personTag: heroId,
+              equipSkills: const [],
+            ),
           ),
         ),
       );
@@ -76,8 +74,8 @@ class SkillTiles extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Person hero = ref.watch(
-        heroDetailPageProvider(initialState).select((value) => value.hero));
+    var hero = ref.watch(heroDetailPageProvider(family)
+        .select((value) => value.valueOrNull!.hero));
 
     int skillNumLimit =
         (hero.legendary != null && hero.legendary?.kind == 1) ? 7 : 8;
@@ -91,18 +89,24 @@ class SkillTiles extends ConsumerWidget {
         for (int index = 0; index < skillNumLimit; index++)
           Consumer(
             builder: (context, ref, child) {
-              Skill? s = ref.watch(heroDetailPageProvider(initialState)
-                  .select((value) => value.equipSkills[index]));
-              return s != null
+              var (done, skill) = ref.watch(heroDetailPageProvider(family)
+                  .select((value) =>
+                      (value.hasValue, value.valueOrNull!.equipSkills[index])));
+
+              if (!done) {
+                return const SizedBox.shrink();
+              }
+
+              return skill != null
                   ? SkillTile(
-                      skill: s,
+                      skill: skill,
                       iconHeight: 30,
                       heroHeight: 40,
                       onClick: (String idtag) => toAnotherHero(
                           context, idtag, ref.read(repoProvider).requireValue),
                       tailBtn: IconButton(
                         onPressed: () => ref
-                            .read(heroDetailPageProvider(initialState).notifier)
+                            .read(heroDetailPageProvider(family).notifier)
                             .changeSkill(
                               HerodetailSkillsChanged(
                                   skill: null, index: index),
@@ -126,12 +130,13 @@ class SkillTiles extends ConsumerWidget {
                         index: index,
                         hero: hero,
                         exclusiveList: ref
-                            .read(heroDetailPageProvider(initialState))
+                            .read(heroDetailPageProvider(family))
+                            .requireValue
                             .exclusiveList
                             .keys
                             .toList(),
                         onSelect: (index, newSkill) => ref
-                            .read(heroDetailPageProvider(initialState).notifier)
+                            .read(heroDetailPageProvider(family).notifier)
                             .changeSkill(
                               HerodetailSkillsChanged(
                                 skill: newSkill,
@@ -147,9 +152,8 @@ class SkillTiles extends ConsumerWidget {
             children: [
               Consumer(
                 builder: (context, ref, child) {
-                  int arenaScore = ref.watch(
-                      heroDetailPageProvider(initialState)
-                          .select((value) => value.arenaScore));
+                  var arenaScore = ref.watch(heroDetailPageProvider(family)
+                      .select((value) => value.valueOrNull!.arenaScore));
 
                   return Text.rich(TextSpan(children: [
                     const TextSpan(
@@ -166,9 +170,8 @@ class SkillTiles extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 child: Consumer(
                   builder: (context, ref, child) {
-                    int allSpCost = ref.watch(
-                        heroDetailPageProvider(initialState)
-                            .select((value) => value.allSpCost));
+                    var allSpCost = ref.watch(heroDetailPageProvider(family)
+                        .select((value) => value.valueOrNull!.allSpCost));
 
                     return Text.rich(
                       TextSpan(children: <InlineSpan>[

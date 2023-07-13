@@ -1,6 +1,6 @@
 import 'package:feh_rebuilder/core/enum/person_type.dart';
 import 'package:feh_rebuilder/core/enum/stats.dart';
-import 'package:feh_rebuilder/models/person/person.dart';
+import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/pages/hero_detail/controller.dart';
 import 'package:feh_rebuilder/pages/hero_detail/widgets/circle_btn.dart';
@@ -11,16 +11,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
-import '../model.dart';
 import 'desc_widget.dart';
 
 class AttrTile extends ConsumerWidget {
   /// 显示属性的tile，包括头像，类型，性格，突破等
-  const AttrTile(this.initialState, {super.key});
+  const AttrTile(this.family, {super.key});
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
-  Future chooseNature(
+  Future changeMerged(
       BuildContext context, HeroDetailPageNotifier notifier, int merged) async {
     List<int?>? _ = await showModalBottomSheet(
         context: context,
@@ -117,17 +116,17 @@ class AttrTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Person hero = ref.watch(
-        heroDetailPageProvider(initialState).select((value) => value.hero));
+    var hero = ref.watch(heroDetailPageProvider(family)
+        .select((value) => value.valueOrNull!.hero));
 
     return Row(
       children: [
         const Padding(padding: EdgeInsets.only(left: 10)),
-
         Consumer(
           builder: (context, ref, child) {
-            bool resplendent = ref.watch(heroDetailPageProvider(initialState)
-                .select((value) => value.resplendent));
+            var (resplendent) = ref.watch(heroDetailPageProvider(family)
+                .select((value) => (value.valueOrNull!.resplendent)));
+
             return hero.resplendentHero ?? false
                 ? IndexedStack(
                     index: resplendent ? 0 : 1,
@@ -208,14 +207,15 @@ class AttrTile extends ConsumerWidget {
         ),
         Consumer(
           builder: (context, ref, child) {
-            int merged = ref.watch(heroDetailPageProvider(initialState)).merged;
+            var (merged) = ref.watch(heroDetailPageProvider(family)
+                .select((value) => (value.valueOrNull!.merged)));
 
             return CircleBtn(
               title: "突破极限",
               text: merged.toString(),
-              onPressed: () => chooseNature(
+              onPressed: () => changeMerged(
                 context,
-                ref.read(heroDetailPageProvider(initialState).notifier),
+                ref.read(heroDetailPageProvider(family).notifier),
                 merged,
               ),
             );
@@ -226,40 +226,44 @@ class AttrTile extends ConsumerWidget {
           width: 5,
         ),
         // 性格按钮
-        Consumer(
-          builder: (context, ref, child) {
-            String? advantage =
-                ref.watch(heroDetailPageProvider(initialState)).advantage;
-            String? disAdvantage =
-                ref.watch(heroDetailPageProvider(initialState)).disAdvantage;
-            String? ascendedAsset =
-                ref.watch(heroDetailPageProvider(initialState)).ascendedAsset;
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: Consumer(
+            builder: (context, ref, child) {
+              var (advantage, disAdvantage, ascendedAsset) =
+                  ref.watch(heroDetailPageProvider(family).select((value) => (
+                        value.valueOrNull!.advantage,
+                        value.valueOrNull!.disAdvantage,
+                        value.valueOrNull!.ascendedAsset,
+                      )));
 
-            return SizedBox(
-              width: 110,
-              child: TextButton(
-                style: ButtonStyle(
-                  padding: MaterialStateProperty.all(const EdgeInsets.all(15)),
-                  side: MaterialStateProperty.all(const BorderSide()),
+              return SizedBox(
+                width: 110,
+                child: TextButton(
+                  style: ButtonStyle(
+                    padding:
+                        MaterialStateProperty.all(const EdgeInsets.all(15)),
+                    side: MaterialStateProperty.all(const BorderSide()),
+                  ),
+                  onPressed: () => chooseAscendAsset(
+                    context,
+                    ref.read(heroDetailPageProvider(family).notifier),
+                    advantage,
+                    disAdvantage,
+                    ascendedAsset,
+                  ),
+                  child: advantage == null && disAdvantage == null
+                      ? Text("CUSTOM_STATS_NULL".tr)
+                      : Text("+%s-%s".fill([
+                          "CUSTOM_STATS_${(advantage ?? "NULL").toUpperCase()}"
+                              .tr,
+                          "CUSTOM_STATS_${(disAdvantage ?? "NULL").toUpperCase()}"
+                              .tr
+                        ])),
                 ),
-                onPressed: () => chooseAscendAsset(
-                  context,
-                  ref.read(heroDetailPageProvider(initialState).notifier),
-                  advantage,
-                  disAdvantage,
-                  ascendedAsset,
-                ),
-                child: advantage == null && disAdvantage == null
-                    ? Text("CUSTOM_STATS_NULL".tr)
-                    : Text("+%s-%s".fill([
-                        "CUSTOM_STATS_${(advantage ?? "NULL").toUpperCase()}"
-                            .tr,
-                        "CUSTOM_STATS_${(disAdvantage ?? "NULL").toUpperCase()}"
-                            .tr
-                      ])),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
 
         const SizedBox(
@@ -268,20 +272,21 @@ class AttrTile extends ConsumerWidget {
 
         Consumer(
           builder: (context, ref, child) {
-            int dragonflowers =
-                ref.watch(heroDetailPageProvider(initialState)).dragonflowers;
+            var (dragonflowers) = ref.watch(heroDetailPageProvider(family)
+                .select((value) => (value.valueOrNull!.dragonflowers)));
 
             return CircleBtn(
               title: "神龙之花",
               text: dragonflowers.toString(),
               onPressed: () => chooseDragonFlowers(
-                  context,
-                  ref.read(heroDetailPageProvider(initialState).notifier),
-                  hero.dragonflowers!.maxCount!,
-                  dragonflowers),
+                context,
+                ref.read(heroDetailPageProvider(family).notifier),
+                hero.dragonflowers!.maxCount!,
+                dragonflowers,
+              ),
             );
           },
-        )
+        ),
       ],
     );
   }

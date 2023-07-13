@@ -41,35 +41,41 @@ class SkillParam extends Equatable {
       ];
 }
 
-final skillsPageProvider = AutoDisposeNotifierProviderFamily<SkillsPageNotifier,
-    SkillPageState, SkillParam>(SkillsPageNotifier.new);
+final skillsPageProvider = AutoDisposeAsyncNotifierProviderFamily<
+    SkillsPageNotifier, SkillPageState, SkillParam>(SkillsPageNotifier.new);
 
 class SkillsPageNotifier
-    extends AutoDisposeFamilyNotifier<SkillPageState, SkillParam> {
-  @override
-  SkillPageState build(SkillParam arg) {
-    return initial(arg);
-  }
+    extends AutoDisposeFamilyAsyncNotifier<SkillPageState, SkillParam> {
+  // late SkillParam _param;
 
-  SkillPageState initial(SkillParam params) {
+  @override
+  Future<SkillPageState> build(SkillParam arg) async {
     Repository repo = ref.read(repoProvider).requireValue;
+
+    var allSkill = (await repo.skill.getAll()).values;
+
     // 圣印不能仅靠category区分
-    var input = params.category == 6
-        ? repo.cacheSkills.values.where((element) => element.isSkillAccessory)
-        : repo.cacheSkills.values
-            .where((element) => element.category == params.category);
+    // var input = arg.category == 6
+    //     ? repo.cacheSkills.values.where((element) => element.isSkillAccessory)
+    //     : repo.cacheSkills.values
+    //         .where((element) => element.category == arg.category);
+
+    var input = arg.category == 6
+        ? allSkill.where((element) => element.isSkillAccessory)
+        : allSkill.where((element) => element.category == arg.category);
 
     List<Skill> output = _filt(
       input.toList(),
-      params.filters,
-      params.moveTypeFilters,
-      params.weaponTypeFilters,
-      params.categoryFilters,
+      arg.filters,
+      arg.moveTypeFilters,
+      arg.weaponTypeFilters,
+      arg.categoryFilters,
+      "reset",
     );
 
-    var exclusive = [...params.exclusiveSkills];
+    var exclusive = [...arg.exclusiveSkills];
     // 去掉其他类的技能
-    exclusive.removeWhere((element) => element.category != params.category);
+    exclusive.removeWhere((element) => element.category != arg.category);
     // 排序
     exclusive.sort((a, b) => a.sortId! == b.sortId!
         ? a.refineSortId!.compareTo(b.refineSortId!)
@@ -80,41 +86,49 @@ class SkillsPageNotifier
     output.insertAll(0, exclusive);
 
     return SkillPageState(
-      category: params.category,
-      selectMode: params.selectMode,
+      category: arg.category,
+      selectMode: arg.selectMode,
       exclusiveSkills: exclusive,
-      filters: params.filters,
-      moveTypeFilters: params.moveTypeFilters,
-      weaponTypeFilters: params.weaponTypeFilters,
-      categoryFilters: params.categoryFilters,
+      filters: arg.filters,
+      moveTypeFilters: arg.moveTypeFilters,
+      weaponTypeFilters: arg.weaponTypeFilters,
+      categoryFilters: arg.categoryFilters,
       input: input.toList(),
       filtered: output,
+      series: "reset",
     );
   }
 
-  void changeFilters({
+  Future<void> changeFilters({
     Set<SkillFilterType>? filters,
     Set<MoveTypeEnum>? moveTypeFilters,
     Set<WeaponTypeEnum>? weponTypeFilters,
     Set<int>? categoryFilters,
-  }) {
-    List<Skill> output = _filt(
-      state.input,
-      filters ?? state.filters,
-      moveTypeFilters ?? state.moveTypeFilters,
-      weponTypeFilters ?? state.weaponTypeFilters,
-      categoryFilters ?? state.categoryFilters,
-    );
+    String? series,
+  }) async {
+    state = await AsyncValue.guard(() async {
+      var s = state.requireValue;
 
-    output.insertAll(0, state.exclusiveSkills);
+      List<Skill> output = _filt(
+        s.input,
+        filters ?? s.filters,
+        moveTypeFilters ?? s.moveTypeFilters,
+        weponTypeFilters ?? s.weaponTypeFilters,
+        categoryFilters ?? s.categoryFilters,
+        series ?? s.series,
+      );
 
-    state = state.copyWith(
-      filtered: output,
-      filters: filters,
-      moveTypeFilters: moveTypeFilters,
-      weaponTypeFilters: weponTypeFilters,
-      categoryFilters: categoryFilters,
-    );
+      output.insertAll(0, s.exclusiveSkills);
+
+      return s.copyWith(
+        filtered: output,
+        filters: filters,
+        moveTypeFilters: moveTypeFilters,
+        weaponTypeFilters: weponTypeFilters,
+        categoryFilters: categoryFilters,
+        series: series,
+      );
+    });
   }
 }
 
@@ -124,6 +138,7 @@ List<Skill> _filt(
   Set<MoveTypeEnum> moveTypefilters,
   Set<WeaponTypeEnum> weponTypefilters,
   Set<int> categoryFilters,
+  String? series,
 ) {
   FilterChain<BaseSkill, SkillFilterType, Skill> chain =
       FilterChain(filters: [], input: input);
@@ -155,7 +170,13 @@ List<Skill> _filt(
       ),
     );
   }
-  var _ = [for (var e in chain.output) e!.skill];
+  var _ = chain.output
+      .where((element) =>
+          series == "reset" ? true : element!.skill.series == series)
+      .map((e) => e!.skill)
+      .toList();
+
+  // var _ = [for (var e in chain.output) e!.skill];
   _.sort((a, b) => a.sortId!.compareTo(b.sortId!) != 0
       ? a.sortId!.compareTo(b.sortId!)
       : a.refineSortId!.compareTo(b.refineSortId!));

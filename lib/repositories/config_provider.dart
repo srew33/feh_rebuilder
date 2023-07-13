@@ -11,7 +11,8 @@ class Config extends Equatable {
     this.initialed = false,
     this.allowGetSysId = false,
     this.dataLanguage = AppLanguages.zh,
-    this.ignoreSignature = false,
+    this.allowCustomGameDB = false,
+    this.webServiceId = "",
   });
 
   /// 程序是否已初始化，默认false
@@ -24,19 +25,24 @@ class Config extends Equatable {
   final AppLanguages dataLanguage;
 
   //是否忽略签名，默认false
-  final bool ignoreSignature;
+  final bool allowCustomGameDB;
+
+  //当前网络服务的唯一ID
+  final String webServiceId;
 
   Config copyWith({
     bool? initialed,
     bool? allowGetSysId,
     AppLanguages? dataLanguage,
-    bool? ignoreSignature,
+    bool? allowCustomGameDB,
+    String? webServiceId,
   }) {
     return Config(
       initialed: initialed ?? this.initialed,
       allowGetSysId: allowGetSysId ?? this.allowGetSysId,
       dataLanguage: dataLanguage ?? this.dataLanguage,
-      ignoreSignature: ignoreSignature ?? this.ignoreSignature,
+      allowCustomGameDB: allowCustomGameDB ?? this.allowCustomGameDB,
+      webServiceId: webServiceId ?? this.webServiceId,
     );
   }
 
@@ -44,12 +50,13 @@ class Config extends Equatable {
     return Config(
       initialed: json["initialed"] ?? false,
       allowGetSysId: json["allowGetSysId"] ?? false,
-      ignoreSignature: json["allowInvalidUpdate"] ?? false,
+      allowCustomGameDB: json["allowCustomGameDB"] ?? false,
       dataLanguage: AppLanguages.values[json["dataLang"] ?? 0],
+      webServiceId: json["webServiceId"] ?? "",
     );
   }
 
   @override
   List<Object> get props =>
-      [initialed, allowGetSysId, dataLanguage, ignoreSignature];
+      [initialed, allowGetSysId, dataLanguage, allowCustomGameDB, webServiceId];
 }

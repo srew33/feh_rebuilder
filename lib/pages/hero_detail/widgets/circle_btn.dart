@@ -27,6 +27,7 @@ class CircleBtn extends StatelessWidget {
             onPressed: onPressed,
             child: Text(
               "+$text",
+              style: const TextStyle(fontSize: 13),
             ),
           ),
         ),

@@ -27,7 +27,9 @@ class HomeNotifier extends Notifier<HomeState> {
   // 但以后修改的可能性比较大
   /// 初始化事件
   Future<void> initial(AppLanguages initialLang) async {
-    var all = [...ref.read(repoProvider).requireValue.cachePersons.values];
+    var all = (await ref.read(repoProvider).requireValue.person.getAll())
+        .values
+        .toList();
 
     controller.setData(_sortBy(all, SortKey.translations, initialLang));
 

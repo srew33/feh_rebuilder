@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:feh_rebuilder/core/enum/game_version.dart';
 import 'package:feh_rebuilder/core/enum/move_type.dart';
 import 'package:feh_rebuilder/core/enum/series.dart';
@@ -11,36 +13,27 @@ import 'package:feh_rebuilder/utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'model.dart';
 
-enum FavPageModeEnum { normal, select }
-
 final favFirstIsGroupingProvider = StateProvider<bool>((ref) {
   return false;
 });
 
-final favFirstProvider =
-    NotifierProvider<FavFirstNotifier, FavFirstState>(FavFirstNotifier.new);
+final favFirstProvider = AsyncNotifierProvider<FavFirstNotifier, FavFirstState>(
+    FavFirstNotifier.new);
 
-class FavFirstNotifier extends Notifier<FavFirstState> {
+class FavFirstNotifier extends AsyncNotifier<FavFirstState> {
   @override
-  FavFirstState build() {
+  FutureOr<FavFirstState> build() async {
     var repo = ref.read(repoProvider).requireValue;
-    var allFav = repo.cacheFavHero.entries
-        .map(
-          (e) => PersonBuildVM.fromBuild(e.value, repo),
-        )
-        .toList();
-    return FavFirstState(all: allFav, filtered: [...allFav], filters: const {});
-  }
+    List<PersonBuildVM?> allFav = [];
 
-  void initial() {
-    var repo = ref.read(repoProvider).requireValue;
-    var allFav = repo.cacheFavHero.entries
-        .map(
-          (e) => PersonBuildVM.fromBuild(e.value, repo),
-        )
-        .toList();
-    state =
-        FavFirstState(all: allFav, filtered: [...allFav], filters: const {});
+    var allFav_ = await repo.favourites.getAll();
+
+    for (var e in allFav_.entries) {
+      // 这里会有异常
+      var v = await PersonBuildVM.fromBuild(e.value, repo);
+      allFav.add(v);
+    }
+    return FavFirstState(all: allFav, filtered: [...allFav], filters: const {});
   }
 
   /// 新增/保存build，触发收藏页和队伍页更新
@@ -48,42 +41,52 @@ class FavFirstNotifier extends Notifier<FavFirstState> {
     String? key,
     required PersonBuild build,
   }) async {
-    var repo = ref.read(repoProvider).requireValue;
-    var key1 = await repo.save2Fav(
-      build: build,
-      key: key,
-    );
+    state = await AsyncValue.guard(() async {
+      var s = state.value!;
 
-    var all = [...state.all];
-    if (key == null) {
-      // 新增
-      all.add(PersonBuildVM.fromBuild(
-          PersonBuild.fromJson(key1, build.toJson()), repo));
-    } else {
-      // 保存
-      // all里的key必不为null
-      int i = all.indexWhere((element) => element.build.key == key);
-      if (i != -1) {
-        var newBuild = PersonBuildVM.fromBuild(
-            PersonBuild.fromJson(key, build.toJson()), repo);
-        all[i] = newBuild;
-        ref.read(favSecondProvider.notifier).updateBuild(newBuild);
+      var repo = ref.read(repoProvider).requireValue;
+      var key1 = await repo.save2Fav(
+        build: build,
+        key: key,
+      );
+      var all = [...s.all];
+      if (key == null) {
+        // 新增
+        all.add(await PersonBuildVM.fromBuild(
+            PersonBuild.fromJson(key1, build.toJson()), repo));
+      } else {
+        // 保存
+        // all里的key必不为null
+        int i = all.indexWhere(
+            (element) => element == null ? false : element.build.key == key);
+
+        if (i != -1) {
+          var newBuild = await PersonBuildVM.fromBuild(
+              PersonBuild.fromJson(key, build.toJson()), repo);
+          if (newBuild != null) {
+            all[i] = newBuild;
+            ref.read(favSecondProvider.notifier).updateBuild(newBuild);
+          }
+        }
       }
-    }
-    List<PersonBuildVM> filtered = _filt(all, state.filters);
-    state = state.copyWith(
-      filtered: filtered,
-      all: all,
-    );
+      List<PersonBuildVM?> filtered = _filt(all, s.filters);
+      return s.copyWith(
+        filtered: filtered,
+        all: all,
+      );
+    });
   }
 
-  void confirmFilter(Set filters) {
-    List<PersonBuildVM> filtered = _filt(state.all, filters);
+  Future<void> confirmFilter(Set filters) async {
+    state = await AsyncValue.guard(() async {
+      var s = state.value!;
+      List<PersonBuildVM?> filtered = _filt(s.all, filters);
 
-    state = state.copyWith(
-      filtered: filtered,
-      filters: filters,
-    );
+      return s.copyWith(
+        filtered: filtered,
+        filters: filters,
+      );
+    });
   }
 
   Future<void> saveTeam(List<String?> team, [String? key]) async {
@@ -103,32 +106,35 @@ class FavFirstNotifier extends Notifier<FavFirstState> {
   }
 
   Future<void> delete(Set<int> selected) async {
-    // 从大到小排列并删除对应元素
-    var s1 = selected.toList();
-    s1.sort((a, b) => b.compareTo(a));
+    state = await AsyncValue.guard(() async {
+      var s = state.value!;
 
-    List<PersonBuildVM> n = [...state.filtered];
-    List<String> keys = [];
-    for (var i in s1) {
-      keys.add(n[i].build.key!);
-      n.removeAt(i);
-    }
+      // 从大到小排列并删除对应元素
+      var s1 = selected.toList();
+      s1.sort((a, b) => b.compareTo(a));
 
-    if (keys.isEmpty) {
-      return;
-    }
-    var repo = ref.read(repoProvider).requireValue;
-    await repo.favourites.deleteSome(keys);
-    // 删除缓存
-    for (var key in keys) {
-      repo.cacheFavHero.remove(key);
-    }
-    // 队伍列表刷新
-    ref.read(favSecondProvider.notifier).refresh();
-    state = state.copyWith(all: n, filtered: n);
+      List<PersonBuildVM?> n = [...s.filtered];
+      List<String> keys = [];
+      for (var i in s1) {
+        if (n[i] != null) {
+          keys.add(n[i]!.build.key!);
+          n.removeAt(i);
+        }
+      }
+
+      if (keys.isEmpty) {
+        return s;
+      }
+      var repo = ref.read(repoProvider).requireValue;
+      await repo.favourites.deleteSome(keys);
+
+      // 队伍列表刷新
+      ref.read(favSecondProvider.notifier).refresh();
+      return s.copyWith(all: n, filtered: n);
+    });
   }
 
-  List<PersonBuildVM> _filt(List<PersonBuildVM> all, Set filters) {
+  List<PersonBuildVM?> _filt(List<PersonBuildVM?> all, Set filters) {
     List<PersonFilter> personFilters = [];
     Set<MoveTypeEnum> moveValid = {};
     Set<WeaponTypeEnum> weaponValid = {};
@@ -189,7 +195,7 @@ class FavFirstNotifier extends Notifier<FavFirstState> {
     }
     var chain = FilterChain(input: all, filters: personFilters);
 
-    List<PersonBuildVM> filtered = [...chain.output].cast<PersonBuildVM>();
+    List<PersonBuildVM?> filtered = [...chain.output].cast<PersonBuildVM?>();
 
     return filtered;
   }

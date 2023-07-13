@@ -10,6 +10,7 @@ import 'package:feh_rebuilder/env_provider.dart';
 import 'package:feh_rebuilder/main.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/my_18n/widget.dart';
+import 'package:feh_rebuilder/pages/home/controller.dart';
 import 'package:feh_rebuilder/pages/skills/controller.dart';
 import 'package:feh_rebuilder/pages/skills/ui.dart';
 import 'package:feh_rebuilder/repositories/config_provider.dart';
@@ -38,7 +39,7 @@ class OthersPage extends ConsumerWidget {
   }
 }
 
-class _AppBar extends StatelessWidget with PreferredSizeWidget {
+class _AppBar extends StatelessWidget implements PreferredSizeWidget {
   const _AppBar();
 
   @override
@@ -141,9 +142,9 @@ class _Body extends StatelessWidget {
 
         const _BackUpTile(),
 
-        ListTile(
+        const ListTile(
           title: Row(
-            children: const [
+            children: [
               Text("程序版本"),
               Spacer(),
               Text(EnvProvider.appVersion),
@@ -152,8 +153,6 @@ class _Body extends StatelessWidget {
         ),
         const _DataVersionTile(),
 
-        // todo 随更新生成工具发布时一起添加
-        // if (platformType != PlatformType.Web) const _AllowInvalidTile(),
         // 检查更新
         if (platformType != PlatformType.Web) const _UpdateTile(),
         // 设备识别码
@@ -178,10 +177,11 @@ class _Body extends StatelessWidget {
                   });
             },
           ),
+        if (platformType != PlatformType.Web) const _CustomDBTile(),
 
         ListTile(
-          title: Row(
-            children: const [
+          title: const Row(
+            children: [
               Text("开源许可"),
               Spacer(),
             ],
@@ -326,120 +326,133 @@ class _DataVersionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    int version =
-        ref.watch(repoProvider.select((value) => value.requireValue.version));
+    bool useCustomDb =
+        ref.watch(configProvider.select((value) => value.allowCustomGameDB));
 
     return ListTile(
-      title: Row(
-        children: [
-          const Text("数据版本"),
-          const Spacer(),
-          IconButton(
-            onPressed: EnvProvider.platformType != PlatformType.Web
-                ? () async {
-                    // 本地更新的方法
-                    String updateFilePath = await showDialog(
-                          context: context,
-                          builder: (context) => UniDialog(
-                            title: "更新",
-                            body: const Text.rich(
-                              TextSpan(children: [
-                                TextSpan(
-                                  text: "使用不安全的更新文件存在安全风险！\n",
-                                  style: TextStyle(color: Colors.red),
+        title: Row(
+          children: [
+            const Text("数据版本"),
+            const Spacer(),
+            IconButton(
+              onPressed: EnvProvider.platformType != PlatformType.Web
+                  ? () async {
+                      // 本地更新的方法
+                      String updateFilePath = await showDialog(
+                            context: context,
+                            builder: (context) => UniDialog(
+                              title: "更新",
+                              body: const Padding(
+                                padding: EdgeInsets.all(8),
+                                child: Text.rich(
+                                  TextSpan(children: [
+                                    TextSpan(
+                                      text: "使用不安全的更新文件存在安全风险！\n",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                    TextSpan(
+                                        text: "使用更新功能需请求存储读取权限\n同意请点击确定选择文件")
+                                  ]),
                                 ),
-                                TextSpan(text: "使用更新功能需请求存储读取权限\n同意请点击确定选择文件")
-                              ]),
+                              ),
+                              onComfirm: () async {
+                                FilePickerResult? filePath = await FilePicker
+                                    .platform
+                                    .pickFiles(allowMultiple: false);
+
+                                if (context.mounted) {
+                                  Navigator.of(context)
+                                      .pop(filePath?.files.first.path);
+                                }
+                              },
                             ),
-                            onComfirm: () async {
-                              FilePickerResult? filePath = await FilePicker
-                                  .platform
-                                  .pickFiles(allowMultiple: false);
+                          ) ??
+                          "";
 
-                              if (context.mounted) {
-                                Navigator.of(context)
-                                    .pop(filePath?.files.first.path);
-                              }
-                            },
-                          ),
-                        ) ??
-                        "";
+                      if (updateFilePath.isNotEmpty) {
+                        Utils.showLoading("升级中...");
 
-                    if (updateFilePath.isNotEmpty) {
-                      Utils.showLoading("升级中...");
+                        String cachePath =
+                            p.join(EnvProvider.tempDir, "update");
+                        try {
+                          var data = await File(updateFilePath).readAsBytes();
 
-                      String cachePath = p.join(EnvProvider.tempDir, "update");
-                      try {
-                        var data = await File(updateFilePath).readAsBytes();
-
-                        if (!ref.read(configProvider).ignoreSignature) {
-                          if (!await Utils.verifySignature(
-                            data.sublist(0, data.length - 384),
-                            data.sublist(data.length - 384),
-                          )) {
-                            Utils.showToast("更新包签名验证失败！");
-                            return;
+                          if (!ref.read(configProvider).allowCustomGameDB) {
+                            if (!await Utils.verifySignature(
+                              data.sublist(0, data.length - 384),
+                              data.sublist(data.length - 384),
+                            )) {
+                              Utils.showToast("更新包签名验证失败！");
+                              return;
+                            }
                           }
-                        }
 
-                        final archive =
-                            ZipDecoder().decodeBytes(data.buffer.asUint8List());
-                        // 释放文件
-                        for (var item in archive.files) {
-                          if (item.isFile) {
-                            File f = File(p.join(cachePath, item.name));
-                            await f.create(recursive: true);
-                            await f.writeAsBytes(item.content as List<int>);
-                          } else {
-                            await Directory(p.join(cachePath, item.name))
-                                .create(recursive: true);
+                          final archive = ZipDecoder()
+                              .decodeBytes(data.buffer.asUint8List());
+                          // 释放文件
+                          for (var item in archive.files) {
+                            if (item.isFile) {
+                              File f = File(p.join(cachePath, item.name));
+                              await f.create(recursive: true);
+                              await f.writeAsBytes(item.content as List<int>);
+                            } else {
+                              await Directory(p.join(cachePath, item.name))
+                                  .create(recursive: true);
+                            }
                           }
-                        }
-                        File bin = File(p.join(cachePath, "data.bin"));
-                        var decoded = const ZLibDecoder()
-                            .decodeBytes(await bin.readAsBytes());
-                        var json = jsonDecode(utf8.decode(decoded));
+                          File bin = File(p.join(cachePath, "data.bin"));
+                          var decoded = const ZLibDecoder()
+                              .decodeBytes(await bin.readAsBytes());
+                          var json = jsonDecode(utf8.decode(decoded));
 
-                        await ref
-                            .read(repoProvider)
-                            .requireValue
-                            .gameDb
-                            .updateDb(json);
-                        await for (var file
-                            in Directory(cachePath).list(recursive: true)) {
-                          // todo 去掉和update的比较
-                          if (file is File &&
-                              p.basename(file.path) != "data.bin") {
-                            String relative = p.relative(file.path,
-                                from: p.join(cachePath, "update"));
+                          await ref
+                              .read(repoProvider)
+                              .requireValue
+                              .gameDb
+                              .updateDb(json);
+                          await for (var file
+                              in Directory(cachePath).list(recursive: true)) {
+                            // todo 去掉和update的比较
+                            if (file is File &&
+                                p.basename(file.path) != "data.bin") {
+                              String relative = p.relative(file.path,
+                                  from: p.join(cachePath, "update"));
 
-                            await file.rename(p.join(
-                                EnvProvider.rootDir, "assets", relative));
+                              await file.rename(p.join(
+                                  EnvProvider.rootDir, "assets", relative));
+                            }
                           }
-                        }
 
-                        Utils.showToast("升级完成，请重启程序");
-                      } catch (e) {
-                        Utils.showToast("升级出错");
-                        Utils.debug(e.toString());
-                        if (await Directory(cachePath).exists()) {
-                          await Directory(cachePath).delete(recursive: true);
+                          Utils.showToast("升级完成，请重启程序");
+                        } catch (e) {
+                          Utils.showToast("升级出错：${e.toString()}");
+                          Utils.debug(e.toString());
+                          if (await Directory(cachePath).exists()) {
+                            await Directory(cachePath).delete(recursive: true);
+                          }
                         }
                       }
                     }
-                  }
-                : null,
-            icon: const Icon(Icons.unarchive),
-          ),
-        ],
-      ),
-      subtitle: Text(
-          "${formatDate(DateTime.fromMillisecondsSinceEpoch(version), [
-            "yyyy",
-            "mm",
-            "dd"
-          ])} ($version)"),
-    );
+                  : null,
+              icon: const Icon(Icons.unarchive),
+            ),
+          ],
+        ),
+        subtitle: useCustomDb
+            ? const Text("自定义数据")
+            : Builder(
+                builder: (context) {
+                  int version = ref.read(repoProvider
+                      .select((value) => value.requireValue.version));
+
+                  return Text(
+                      "${formatDate(DateTime.fromMillisecondsSinceEpoch(version), [
+                        "yyyy",
+                        "mm",
+                        "dd"
+                      ])} ($version)");
+                },
+              ));
   }
 }
 
@@ -449,39 +462,53 @@ class _DeviceIdTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
-      title: Row(
-        children: const [
+      title: const Row(
+        children: [
           Text("设备识别码"),
           Spacer(),
         ],
       ),
       onTap: () async {
         String deviceId = await ref.read(netProvider).generateDeviceId();
-        String? usingDeviceId =
-            (await ref.read(netProvider).getCurrentUser())[1];
-        TextEditingController controller =
-            TextEditingController(text: usingDeviceId ?? deviceId);
+
+        String usingDeviceId = ref.read(configProvider).webServiceId;
+        TextEditingController controller = TextEditingController(
+            text: usingDeviceId.isEmpty ? deviceId : usingDeviceId);
         if (context.mounted) {
           await showDialog(
               context: context,
               builder: (context) => SimpleDialog(
                     children: [
-                      const Text(
-                        "这是当前使用的设备识别码（已加密）\n你可以将以前设备的识别码粘贴到下方来恢复设备权限",
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          "这是当前使用的设备识别码（已加密）\n你可以将以前设备的识别码粘贴到下方来恢复设备权限",
+                        ),
                       ),
-                      TextField(
-                        controller: controller,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: TextField(
+                          controller: controller,
+                        ),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           TextButton(
                               onPressed: () async {
+                                var p1 = controller.text.replaceAll(" ", "");
                                 var r = await ref
                                     .read(netProvider)
-                                    .restoreDevice(
-                                        controller.text.replaceAll(" ", ""));
+                                    .restoreDevice(p1);
                                 if (r != null) {
+                                  ref.read(configProvider.notifier).update(
+                                      (state) =>
+                                          state.copyWith(webServiceId: p1));
+                                  await ref
+                                      .read(repoProvider)
+                                      .requireValue
+                                      .config
+                                      .putIfAbsent("webServiceId", p1);
                                   Utils.showToast("成功");
                                 }
                                 if (context.mounted) {
@@ -504,23 +531,59 @@ class _DeviceIdTile extends ConsumerWidget {
   }
 }
 
-// ignore: unused_element
-// class _AllowInvalidTile extends ConsumerWidget {
-//   const _AllowInvalidTile({Key? key}) : super(key: key);
+// 不允许修改，在数据版本按钮中来修改
+class _CustomDBTile extends ConsumerWidget {
+  const _CustomDBTile({Key? key}) : super(key: key);
 
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     final bool ignoreSignature = ref.watch(configProvider).ignoreSignature;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    bool allowCustomGameDB =
+        ref.watch(configProvider.select((value) => value.allowCustomGameDB));
 
-//     return SwitchListTile(
-//         title: const Text("验证更新包数字签名"),
-//         value: !allowInvalidUpdate,
-//         onChanged: (bool newState) async {
-//           // print(newState);
-//           await context.read<ConfigCubit>().setAllowInvalidUpdate(!newState);
-//         });
-//   }
-// }
+    return SwitchListTile(
+      title: const Text("使用自定义数据"),
+      // activeColor: Colors.red,
+      subtitle: const Text("允许使用自己生成的数据和资源文件"),
+      value: allowCustomGameDB,
+      // onChanged: null,
+      onChanged: (bool newState) async {
+        var repo = ref.read(repoProvider).requireValue;
+
+        if (newState) {
+          var c = File(p.join(EnvProvider.rootDir, "custom.db"));
+          var g = File(p.join(EnvProvider.rootDir, "feh.db"));
+          // 如果custom.db 不存在，把feh.db复制过来
+          if (!c.existsSync() && g.existsSync()) {
+            await g.copy(c.path);
+          }
+        }
+
+        await repo.switchGameDB(newState ? "custom.db" : "feh.db");
+
+        // if (context.mounted) {
+        //   await MyI18nWidget.of(context).refresh();
+        // }
+        // 刷新主页的数据
+        await ref
+            .read(homeProvider.notifier)
+            .initial(ref.read(configProvider).dataLanguage);
+
+        await repo.config.putIfAbsent("allowCustomGameDB", newState);
+
+        // 这里要在更新config后再刷新repoProvider，
+        // 否则repoProvider更新会造成config重复更新
+        // ignore: unused_result
+        ref.refresh(repoProvider.future);
+
+        // ref
+        //     .read(configProvider.notifier)
+        //     .update((state) => state.copyWith(allowCustomGameDB: newState));
+
+        Utils.showToast("切换完成，请重启程序");
+      },
+    );
+  }
+}
 
 class _UpdateTile extends ConsumerWidget {
   const _UpdateTile({Key? key}) : super(key: key);
@@ -528,28 +591,34 @@ class _UpdateTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListTile(
-      title: Row(
-        children: const [
+      title: const Row(
+        children: [
           Text("检查更新"),
           Spacer(),
         ],
       ),
+      // subtitle: const Text("与旧版本数据不兼容，暂停使用"),
       onTap: () async {
-        var r = await ref.read(netProvider).checkUpdate(
-            EnvProvider.appVersionCode,
-            ref.read(repoProvider).requireValue.version);
+        var useCustom = ref.read(configProvider).allowCustomGameDB;
+        if (useCustom) {
+          Utils.showToast("正在使用自定义数据");
+        } else {
+          var r = await ref.read(netProvider).checkUpdate(
+              EnvProvider.appVersionCode,
+              ref.read(repoProvider).requireValue.version);
 
-        if (r != null && context.mounted) {
-          // var info = [for (var item in r) NetUpdateInfoPO.fromJson(item)];
-          if (r.isEmpty) {
-            Utils.showToast("未发现更新");
-          } else {
-            await showDialog(
-                context: context,
-                builder: (context) => UpdateWebDialog(
-                      updateInfo: r.map((e) => e.toBusinessModel()).toList(),
-                      db: ref.read(repoProvider).requireValue.gameDb,
-                    ));
+          if (r != null && context.mounted) {
+            // var info = [for (var item in r) NetUpdateInfoPO.fromJson(item)];
+            if (r.isEmpty) {
+              Utils.showToast("未发现更新");
+            } else {
+              await showDialog(
+                  context: context,
+                  builder: (context) => UpdateWebDialog(
+                        updateInfo: r.map((e) => e.toBusinessModel()).toList(),
+                        db: ref.read(repoProvider).requireValue.gameDb,
+                      ));
+            }
           }
         }
       },

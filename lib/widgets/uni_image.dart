@@ -35,18 +35,19 @@ class UniImage extends StatelessWidget {
       image: FileImage(
         File(p.join(EnvProvider.rootDir, path)),
       ),
-      frameBuilder: (context, child, frame, loaded) {
-        if (loaded) {
-          return child;
-        }
-        return frame != null
-            ? child
-            : SizedBox(
-                width: height,
-                height: height,
-              );
-      },
       height: height,
+      frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+        if (wasSynchronouslyLoaded) {
+          return child;
+        } else {
+          return frame != null
+              ? child
+              : SizedBox(
+                  width: height,
+                  height: height,
+                );
+        }
+      },
       errorBuilder: (context, obj, s) => SizedBox(
         width: height,
         height: height,

@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:feh_rebuilder/pages/fav/body/second/controller.dart';
 import 'package:feh_rebuilder/widgets/uni_image.dart';
 
+import '../second/model.dart';
 import 'controller.dart';
 import 'model.dart';
 
@@ -27,72 +28,88 @@ class FavFixedBar1 extends ConsumerStatefulWidget {
 class _FavFixedBar1State extends ConsumerState<FavFixedBar1> {
   @override
   Widget build(BuildContext context) {
-    var data = ref.watch(favFirstProvider.select((value) => value.filtered));
+    var data =
+        ref.watch(favFirstProvider.selectAsync((value) => value.filtered));
 
-    return Card(
-      elevation: 0.5,
-      child: Row(
-        children: [
-          Text("总数量：${data.length}"),
-          const Spacer(),
-          if (!widget.swipeActionController.isEditing.value)
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  widget.swipeActionController.toggleEditingMode();
-                });
-              },
-              icon: const Icon(
-                Icons.remove_circle,
-                color: Colors.red,
-              ),
-            ),
-          if (!widget.swipeActionController.isEditing.value)
-            IconButton(
-              onPressed: () {
-                ref
-                    .read(favFirstIsGroupingProvider.notifier)
-                    .update((state) => true);
-              },
-              icon: const Icon(
-                Icons.group_add,
-                color: Colors.green,
-              ),
-            ),
-          if (widget.swipeActionController.isEditing.value)
-            Row(
+    return FutureBuilder<List<PersonBuildVM?>>(
+        future: data,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(snapshot.error.toString()),
+            );
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const SizedBox.shrink();
+          }
+
+          var s = snapshot.data!;
+
+          return Card(
+            elevation: 0.5,
+            child: Row(
               children: [
-                TextButton(
-                    onPressed: () => widget.onDel
-                        ?.call(widget.swipeActionController.selectedSet),
-                    child: const Text(
-                      "确定",
-                      style: TextStyle(color: Colors.red),
-                    )),
-                const SizedBox(
-                  width: 10,
-                ),
-                TextButton(
-                    onPressed: () => widget.swipeActionController
-                        .selectAll(dataLength: data.length),
-                    child: const Text(
-                      "全选",
-                    )),
-                const SizedBox(
-                  width: 10,
-                ),
-                TextButton(
+                Text("总数量：${s.length}"),
+                const Spacer(),
+                if (!widget.swipeActionController.isEditing.value)
+                  IconButton(
                     onPressed: () {
                       setState(() {
                         widget.swipeActionController.toggleEditingMode();
                       });
                     },
-                    child: const Text("取消"))
+                    icon: const Icon(
+                      Icons.remove_circle,
+                      color: Colors.red,
+                    ),
+                  ),
+                if (!widget.swipeActionController.isEditing.value)
+                  IconButton(
+                    onPressed: () {
+                      ref
+                          .read(favFirstIsGroupingProvider.notifier)
+                          .update((state) => true);
+                    },
+                    icon: const Icon(
+                      Icons.group_add,
+                      color: Colors.green,
+                    ),
+                  ),
+                if (widget.swipeActionController.isEditing.value)
+                  Row(
+                    children: [
+                      TextButton(
+                          onPressed: () => widget.onDel
+                              ?.call(widget.swipeActionController.selectedSet),
+                          child: const Text(
+                            "确定",
+                            style: TextStyle(color: Colors.red),
+                          )),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      TextButton(
+                          onPressed: () => widget.swipeActionController
+                              .selectAll(dataLength: s.length),
+                          child: const Text(
+                            "全选",
+                          )),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      TextButton(
+                          onPressed: () {
+                            setState(() {
+                              widget.swipeActionController.toggleEditingMode();
+                            });
+                          },
+                          child: const Text("取消"))
+                    ],
+                  ),
               ],
             ),
-        ],
-      ),
-    );
+          );
+        });
   }
 }
 
@@ -338,60 +355,76 @@ class FavFixedBar3 extends ConsumerStatefulWidget {
 class _FavFixedBar3State extends ConsumerState<FavFixedBar3> {
   @override
   Widget build(BuildContext context) {
-    var data = ref.watch(favSecondProvider.select((value) => value.filtered));
+    var data =
+        ref.watch(favSecondProvider.selectAsync((value) => value.filtered));
 
-    return Card(
-      elevation: 0.5,
-      child: Row(
-        children: [
-          Text("总数量：${data.length}"),
-          const Spacer(),
-          if (!widget.swipeActionController.isEditing.value)
-            IconButton(
-              onPressed: () {
-                setState(() {
-                  widget.swipeActionController.toggleEditingMode();
-                });
-              },
-              icon: const Icon(
-                Icons.remove_circle,
-                color: Colors.red,
-              ),
-            ),
-          if (widget.swipeActionController.isEditing.value)
-            Row(
+    return FutureBuilder<List<FavSecondItemModel>>(
+        future: data,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(snapshot.error.toString()),
+            );
+          }
+          if (snapshot.hasError || !snapshot.hasData) {
+            return const SizedBox.shrink();
+          }
+
+          var s = snapshot.requireData;
+
+          return Card(
+            elevation: 0.5,
+            child: Row(
               children: [
-                TextButton(
-                    onPressed: () => widget.onDel
-                        ?.call(widget.swipeActionController.selectedSet),
-                    child: const Text(
-                      "确定",
-                      style: TextStyle(color: Colors.red),
-                    )),
-                const SizedBox(
-                  width: 10,
-                ),
-                TextButton(
-                    onPressed: () => widget.swipeActionController
-                        .selectAll(dataLength: data.length),
-                    child: const Text(
-                      "全选",
-                    )),
-                const SizedBox(
-                  width: 10,
-                ),
-                TextButton(
+                Text("总数量：${s.length}"),
+                const Spacer(),
+                if (!widget.swipeActionController.isEditing.value)
+                  IconButton(
                     onPressed: () {
                       setState(() {
                         widget.swipeActionController.toggleEditingMode();
                       });
                     },
-                    child: const Text("取消"))
+                    icon: const Icon(
+                      Icons.remove_circle,
+                      color: Colors.red,
+                    ),
+                  ),
+                if (widget.swipeActionController.isEditing.value)
+                  Row(
+                    children: [
+                      TextButton(
+                          onPressed: () => widget.onDel
+                              ?.call(widget.swipeActionController.selectedSet),
+                          child: const Text(
+                            "确定",
+                            style: TextStyle(color: Colors.red),
+                          )),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      TextButton(
+                          onPressed: () => widget.swipeActionController
+                              .selectAll(dataLength: s.length),
+                          child: const Text(
+                            "全选",
+                          )),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      TextButton(
+                          onPressed: () {
+                            setState(() {
+                              widget.swipeActionController.toggleEditingMode();
+                            });
+                          },
+                          child: const Text("取消"))
+                    ],
+                  )
               ],
-            )
-        ],
-      ),
-    );
+            ),
+          );
+        });
   }
 }
 

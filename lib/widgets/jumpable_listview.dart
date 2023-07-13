@@ -99,7 +99,9 @@ class _JumpableListViewState<T> extends State<JumpableListView<T>> {
   set newGroupIndex(int newIndex) {
     if (currentGroupIndex != newIndex) {
       currentGroupIndex = newIndex;
-      _indexBar.currentState!.currentIndex.value = newIndex;
+      if (_indexBar.currentState != null) {
+        _indexBar.currentState!.currentIndex.value = newIndex;
+      }
     }
   }
 

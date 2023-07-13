@@ -4,10 +4,8 @@ import 'package:feh_rebuilder/main.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
-import 'package:feh_rebuilder/pages/hero_detail/model.dart';
 import 'package:feh_rebuilder/pages/hero_detail/ui.dart';
 import 'package:feh_rebuilder/repositories/config_provider.dart';
-import 'package:feh_rebuilder/repositories/repo_provider.dart';
 import 'package:feh_rebuilder/utils.dart';
 import 'package:feh_rebuilder/widgets/filter_drawer/controller.dart';
 import 'package:feh_rebuilder/widgets/filter_drawer/filter_drawer.dart';
@@ -43,7 +41,7 @@ class HomePage extends ConsumerWidget {
   }
 }
 
-class _AppBar extends ConsumerWidget with PreferredSizeWidget {
+class _AppBar extends ConsumerWidget implements PreferredSizeWidget {
   const _AppBar();
 
   @override
@@ -119,21 +117,16 @@ class __BodyState extends ConsumerState<_Body> {
         sum: person.bst.toString(),
         onClick: () async {
           Utils.debug(person.idTag!);
-          var initial = await HerodetailState.initial(
-              PersonBuild(
+
+          await Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => HeroDetailPage(
+              favKey: null,
+              family: PersonBuild(
                 personTag: person.idTag!,
                 equipSkills: const [],
               ),
-              ref.read(repoProvider).requireValue);
-
-          if (context.mounted) {
-            await Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => HeroDetailPage(
-                favKey: null,
-                initialState: initial,
-              ),
-            ));
-          }
+            ),
+          ));
         },
       ),
       scrollController: ref.read(homeProvider.notifier).controller,

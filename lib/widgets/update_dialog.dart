@@ -26,20 +26,23 @@ class UpdateWebDialog extends StatelessWidget {
     return Dialog(
       child: SizedBox(
         height: MediaQuery.of(context).size.height / 2,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "发现更新！",
-              style: Theme.of(context).textTheme.titleLarge!,
-            ),
-            Expanded(
-              child: _Content(
-                updateInfo: updateInfo,
-                db: db,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "发现更新！",
+                style: Theme.of(context).textTheme.titleLarge!,
               ),
-            ),
-          ],
+              Expanded(
+                child: _Content(
+                  updateInfo: updateInfo,
+                  db: db,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

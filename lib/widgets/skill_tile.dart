@@ -1,6 +1,8 @@
+import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
 import 'package:feh_rebuilder/my_18n/extension.dart';
 import 'package:feh_rebuilder/repositories/repo_provider.dart';
+import 'package:feh_rebuilder/repositories/repository.dart';
 import 'package:feh_rebuilder/styles/text_styles.dart';
 import 'package:feh_rebuilder/widgets/uni_image.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +23,9 @@ class SkillTile extends ConsumerWidget {
   final double? heroHeight;
   final Widget? tailBtn;
   final Function(String idTag)? onClick;
+
+  Future<Person?> getPerson(Repository repo, String tag) async =>
+      await repo.person.read(tag);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -120,14 +125,19 @@ class SkillTile extends ConsumerWidget {
                         InkWell(
                           onTap: () =>
                               onClick?.call(skill.rarity3.elementAt(i)),
-                          child: ClipOval(
-                            child: UniImage(
-                              path: p
-                                  .join("assets", "faces",
-                                      "${repo.cachePersons[skill.rarity3.elementAt(i)]!.faceName}.webp")
-                                  .replaceAll(r"\", "/"),
-                              height: heroHeight!,
-                            ),
+                          child: FutureBuilder<Person?>(
+                            future: getPerson(repo, skill.rarity3.elementAt(i)),
+                            builder: (context, snapshot) =>
+                                (snapshot.hasData && !snapshot.hasError)
+                                    ? ClipOval(
+                                        child: UniImage(
+                                        path: p
+                                            .join("assets", "faces",
+                                                "${snapshot.data?.faceName}.webp")
+                                            .replaceAll(r"\", "/"),
+                                        height: heroHeight!,
+                                      ))
+                                    : const SizedBox.shrink(),
                           ),
                         ),
                     ],
@@ -150,15 +160,29 @@ class SkillTile extends ConsumerWidget {
                         InkWell(
                           onTap: () =>
                               onClick?.call(skill.rarity4.elementAt(i)),
-                          child: ClipOval(
-                            child: UniImage(
-                              path: p
-                                  .join("assets", "faces",
-                                      "${repo.cachePersons[skill.rarity4.elementAt(i)]!.faceName}.webp")
-                                  .replaceAll(r"\", "/"),
-                              height: heroHeight!,
-                            ),
+                          child: FutureBuilder<Person?>(
+                            future: getPerson(repo, skill.rarity4.elementAt(i)),
+                            builder: (context, snapshot) =>
+                                (snapshot.hasData && !snapshot.hasError)
+                                    ? ClipOval(
+                                        child: UniImage(
+                                        path: p
+                                            .join("assets", "faces",
+                                                "${snapshot.data?.faceName}.webp")
+                                            .replaceAll(r"\", "/"),
+                                        height: heroHeight!,
+                                      ))
+                                    : const SizedBox.shrink(),
                           ),
+                          // child: ClipOval(
+                          //   child: UniImage(
+                          //     path: p
+                          //         .join("assets", "faces",
+                          //             "${repo.cachePersons[skill.rarity4.elementAt(i)]!.faceName}.webp")
+                          //         .replaceAll(r"\", "/"),
+                          //     height: heroHeight!,
+                          //   ),
+                          // ),
                         )
                     ],
                   ),
@@ -180,15 +204,29 @@ class SkillTile extends ConsumerWidget {
                         InkWell(
                           onTap: () =>
                               onClick?.call(skill.rarity5.elementAt(i)),
-                          child: ClipOval(
-                            child: UniImage(
-                              path: p
-                                  .join("assets", "faces",
-                                      "${repo.cachePersons[skill.rarity5.elementAt(i)]!.faceName}.webp")
-                                  .replaceAll(r"\", "/"),
-                              height: heroHeight!,
-                            ),
+                          child: FutureBuilder<Person?>(
+                            future: getPerson(repo, skill.rarity5.elementAt(i)),
+                            builder: (context, snapshot) =>
+                                (snapshot.hasData && !snapshot.hasError)
+                                    ? ClipOval(
+                                        child: UniImage(
+                                        path: p
+                                            .join("assets", "faces",
+                                                "${snapshot.data?.faceName}.webp")
+                                            .replaceAll(r"\", "/"),
+                                        height: heroHeight!,
+                                      ))
+                                    : const SizedBox.shrink(),
                           ),
+                          // child: ClipOval(
+                          //   child: UniImage(
+                          //     path: p
+                          //         .join("assets", "faces",
+                          //             "${repo.cachePersons[skill.rarity5.elementAt(i)]!.faceName}.webp")
+                          //         .replaceAll(r"\", "/"),
+                          //     height: heroHeight!,
+                          //   ),
+                          // ),
                         )
                     ],
                   ),

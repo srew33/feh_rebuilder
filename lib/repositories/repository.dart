@@ -8,15 +8,13 @@ import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/person/stats.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/models/skill/skill.dart';
-import 'package:feh_rebuilder/models/weapon_type/weapon_type.dart';
 import 'package:feh_rebuilder/my_18n/widget.dart';
-import 'package:feh_rebuilder/repositories/config_provider.dart';
 import 'package:feh_rebuilder/repositories/data_table.dart';
 import 'package:feh_rebuilder/utils.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:path/path.dart' as p;
 
 import 'data_provider.dart';
-
-enum DataTypeEnum { person, skill, weapon, favourites, arenaTeam, config }
 
 extension MapUtils<K, V> on Map<K, V> {
   Future<V> putIfAbsentAsync(K key, FutureOr<V> Function() action) async {
@@ -45,105 +43,38 @@ class Repository implements TranslationLoader {
     skill = SkillTable(db: gameDb.db);
     weapon = WeaponTable(db: gameDb.db);
     translations = TranslationsTable(db: gameDb.db);
+    skillSeries = SkillSeriesTable(db: gameDb.db);
+
     favourites = FavouritesTable(db: userDb.db);
     arenaTeam = ArenaTeamTable(db: userDb.db);
     config = ConfigTable(db: userDb.db);
   }
 
-  late final PersonTable person;
-  late final SkillTable skill;
-  late final WeaponTable weapon;
-  late final TranslationsTable translations;
-  late final FavouritesTable favourites;
-  late final ArenaTeamTable arenaTeam;
-  late final ConfigTable config;
-
-  /// 目前在启动时会存储所有数据，如果内存占用过大改为缓存形式
-  Map<String, WeaponType> cacheWeaponTypes = {};
-  Map<String, Person> cachePersons = {};
-  Map<String, Skill> cacheSkills = {};
-  Map<String, PersonBuild> cacheFavHero = {};
-  Map<String, List<String?>> cacheArenateam = {};
+  late PersonTable person;
+  late SkillTable skill;
+  late WeaponTable weapon;
+  late TranslationsTable translations;
+  late FavouritesTable favourites;
+  late ArenaTeamTable arenaTeam;
+  late ConfigTable config;
+  late SkillSeriesTable skillSeries;
 
   String get appPath => EnvProvider.rootDir;
 
   int get version => gameDb.db.version;
 
-  FutureOr readOne(DataTypeEnum type, String key) async {
-    switch (type) {
-      case DataTypeEnum.person:
-        return cachePersons.putIfAbsentAsync(
-            key, () async => Person.fromJson((await person.read(key))!));
-      case DataTypeEnum.skill:
-        return cacheSkills.putIfAbsentAsync(
-            key, () async => Skill.fromJson((await skill.read(key))!));
-      case DataTypeEnum.weapon:
-        return cacheWeaponTypes.putIfAbsentAsync(
-            key, () async => WeaponType.fromJson((await weapon.read(key))!));
+  List<PersonBuild> _localBuilds = [];
 
-      case DataTypeEnum.favourites:
-        return cacheFavHero.putIfAbsentAsync(
-            key,
-            () async =>
-                PersonBuild.fromJson(key, (await favourites.read(key))!));
+  FutureOr<List<PersonBuild>> getLocalBuilds(String tag) async {
+    if (_localBuilds.isEmpty) {
+      final myData = await rootBundle.loadString('assets/builds.json');
 
-      case DataTypeEnum.arenaTeam:
-        return cacheArenateam.putIfAbsentAsync(
-            key, () async => (await arenaTeam.read(key)));
+      var json = (jsonDecode(myData) as List).cast<List>();
 
-      case DataTypeEnum.config:
-        return Config.fromJson(await config.getAll());
-      default:
-        throw UnimplementedError();
+      _localBuilds = json.map((e) => PersonBuild.fromList(e)).toList();
     }
-  }
 
-  FutureOr<Iterable> readSome(DataTypeEnum type, List<String> keys) async {
-    return keys.map((key) async => await readOne(type, key));
-  }
-
-  Future readAll(DataTypeEnum type) async {
-    switch (type) {
-      case DataTypeEnum.person:
-        return (await person.getAll())
-            .map((key, value) => MapEntry(key, Person.fromJson(value)));
-      case DataTypeEnum.skill:
-        return (await skill.getAll())
-            .map((key, value) => MapEntry(key, Skill.fromJson(value)));
-      case DataTypeEnum.weapon:
-        return (await weapon.getAll())
-            .map((key, value) => MapEntry(key, WeaponType.fromJson(value)));
-
-      case DataTypeEnum.favourites:
-        return (await favourites.getAll()).map(
-            (key, value) => MapEntry(key, PersonBuild.fromJson(key, value)));
-
-      case DataTypeEnum.arenaTeam:
-        return (await arenaTeam.getAll()).map(
-            (key, value) => MapEntry(key, (value as List).cast<String?>()));
-
-      default:
-        throw UnimplementedError();
-    }
-  }
-
-  Future<void> initCaches() async {
-    cacheWeaponTypes = (await weapon.getAll())
-        .map((key, value) => MapEntry(key, WeaponType.fromJson(value)));
-
-    cachePersons = (await person.getAll())
-        .map((key, value) => MapEntry(key, Person.fromJson(value)));
-
-    cacheSkills = (await skill.getAll())
-        .map((key, value) => MapEntry(key, Skill.fromJson(value)));
-
-    cacheFavHero = (await favourites.getAll())
-        .map((key, value) => MapEntry(key, PersonBuild.fromJson(key, value)));
-
-    cacheArenateam = (await arenaTeam.getAll())
-        .map((key, value) => MapEntry(key, (value as List).cast<String?>()));
-
-    await _cleanAreana();
+    return _localBuilds.where((element) => element.personTag == tag).toList();
   }
 
   Future<String> getRestoreData() async {
@@ -165,6 +96,7 @@ class Repository implements TranslationLoader {
 
   /// 清理竞技场表的脏数据
   Future<void> _cleanAreana() async {
+    var cacheArenateam = await arenaTeam.getAllRaw();
     List<String> toDel = [];
     for (var e in cacheArenateam.entries) {
       // if (!e.value.any((element) => element != null)) {
@@ -193,17 +125,10 @@ class Repository implements TranslationLoader {
         .map((key, value) => MapEntry(key, value as String? ?? ""));
   }
 
-  List<Skill?> getSkillsByTags(List<String?> tags) {
-    List<Skill?> result =
-        tags.map((e) => e == null ? null : cacheSkills[e]).toList();
-
-    return result;
-  }
-
   /// 通过传入的人物模型获取该人物初始化技能
   ///
   /// 顺序为武器、辅助、奥义、A、B、C、S、祝福、需学习的专武
-  List<Skill?> getPersonInitialSkills(Person hero) {
+  FutureOr<List<Skill?>> getPersonInitialSkills(Person hero) async {
     // 将二维skills降维,获得一维的技能列表
     List<String?> all =
         hero.skills!.skills.fold<List<String?>>([], (previousValue, element) {
@@ -212,8 +137,10 @@ class Repository implements TranslationLoader {
     });
 
     // 将人物所有技能替换成skill模型
-    List<Skill?> skills =
-        all.map((e) => e == null ? null : cacheSkills[e]).toList();
+    // List<Skill?> skills =
+    //     all.map((e) => e == null ? null : cacheSkills[e]).toList();
+
+    List<Skill?> skills = await skill.readSome(all);
 
     // 初始化返回的技能列表，最后一位是可学习的专武
     // 顺序为武器、辅助、奥义、A、B、C、S、祝福、需学习的专武
@@ -320,14 +247,17 @@ class Repository implements TranslationLoader {
   final Map<PersonBuild, int> _builds2ArenaScore = {};
 
   /// 通过PersonBuild计算竞技场档位，内部具有缓存避免重复计算
-  int getBstByBuild(
+  FutureOr<int> getBstByBuild(
     PersonBuild build,
   ) {
-    return _builds2Bst.putIfAbsent(build, () {
-      Person hero = cachePersons[build.personTag]!;
+    return _builds2Bst.putIfAbsentAsync(build, () async {
+      Person? hero = await person.read(build.personTag);
 
-      List<Skill?> equipSkills =
-          build.equipSkills.map((e) => cacheSkills[e]).toList();
+      if (hero == null) {
+        return 0;
+      }
+
+      List<Skill?> equipSkills = await skill.readSome(build.equipSkills);
 
       Stats stat = Stats.fromJson(Utils.calcStats(hero, 1, 40, build.rarity,
           build.advantage, build.disAdvantage, build.merged > 0 ? 1 : 0));
@@ -361,12 +291,11 @@ class Repository implements TranslationLoader {
   /// 团队分 = 基础分 + average(英雄个体分1+英雄个体分2+英雄个体分3+英雄个体分4)
   /// 团队分数线 = floor(团队分) * 加分奖励(固定为2)
   /// 这里返回的时个体分，团队分按上面公式计算
-  int getArenaScoreByBuild(
+  FutureOr<int> getArenaScoreByBuild(
     PersonBuild build,
   ) {
-    return _builds2ArenaScore.putIfAbsent(build, () {
-      List<Skill?> equipSkills =
-          build.equipSkills.map((e) => cacheSkills[e]).toList();
+    return _builds2ArenaScore.putIfAbsentAsync(build, () async {
+      List<Skill?> equipSkills = await skill.readSome(build.equipSkills);
 
       int allSpCost = equipSkills.sublist(0, 8).fold<int>(0,
           (previousValue, element) => previousValue + (element?.spCost ?? 0));
@@ -374,7 +303,7 @@ class Repository implements TranslationLoader {
       // 从传承效果、A技能、和白值中计算最高的一个值，突破大于0时白值+3
       // 计算0破性格时已经计算过性格对白值的影响(一般会+-3，优劣性格会+-4，因此总白值相对中性
       // 已经有了-1到+1的补充)，这里不需要计算
-      int bst = getBstByBuild(build);
+      int bst = await getBstByBuild(build);
 
       return (rarityArenaScore[build.rarity - 1][0] as int) +
           ((rarityArenaScore[build.rarity - 1][1] as double) * 40).floor() +
@@ -397,7 +326,7 @@ class Repository implements TranslationLoader {
 
     await favourites.putIfAbsent(key, v);
 
-    cacheFavHero.putIfAbsent(key, () => PersonBuild.fromJson(key, v));
+    // cacheFavHero.putIfAbsent(key, () => PersonBuild.fromJson(key, v));
 
     return key;
   }
@@ -414,7 +343,7 @@ class Repository implements TranslationLoader {
       team,
     );
 
-    cacheArenateam.putIfAbsent(key1, () => team);
+    // cacheArenateam.putIfAbsent(key1, () => team);
 
     return key1;
   }
@@ -424,59 +353,15 @@ class Repository implements TranslationLoader {
     return await loadTranslationData(newLocale);
   }
 
-  // PersonBuild? decodeBuild(String encoded) {
-  //   // todo 对于旧版本数据解析到新版本数据的处理，避免数据越界
-  //   try {
-  //     List<int> all = HashIds().decode(encoded);
-  //     PersonBuild? result;
+  Future switchGameDB(String newPath) async {
+    await gameDb.db.close();
 
-  //     if (all.length < 18) {
-  //       throw "解析错误";
-  //     }
+    gameDb = await GameDb(p.join(EnvProvider.rootDir, newPath)).init();
 
-  //     String personTag = cachePersons.values
-  //             .firstWhere(
-  //               (element) => element.idNum == all[0],
-  //               orElse: () => Person(),
-  //             )
-  //             .idTag ??
-  //         "";
-  //     if (personTag.isEmpty) {
-  //       // 旧版本数据找不到新版本人物
-  //       return null;
-  //     }
-  //     List<String?> skillsTags = all
-  //         .sublist(9, 17)
-  //         .map((e) => e == 0
-  //             ? null
-  //             : cacheSkills.values
-  //                 .firstWhere(
-  //                   (element) => element.idNum == e,
-  //                   orElse: () => Skill(idTag: "SID_CUSTOM_無し"),
-  //                 )
-  //                 .idTag)
-  //         .toList();
-  //     result = PersonBuild(
-  //       personTag: personTag,
-  //       equipSkills: skillsTags,
-  //       advantage:
-  //           all[1] == 9 ? null : StatsEnum.values[all[1]].name.toLowerCase(),
-  //       disAdvantage:
-  //           all[2] == 9 ? null : StatsEnum.values[all[2]].name.toLowerCase(),
-  //       rarity: all[3],
-  //       merged: all[4],
-  //       dragonflowers: all[5],
-  //       resplendent: all[6] == 1 ? true : false,
-  //       summonerSupport: all[7] == 1 ? true : false,
-  //       arenaScore: all[8],
-  //       ascendedAsset:
-  //           all[17] == 9 ? null : StatsEnum.values[all[17]].name.toLowerCase(),
-  //     );
-
-  //     return result;
-  //   } on Exception catch (e) {
-  //     Utils.debug(e.toString());
-  //     return null;
-  //   }
-  // }
+    person = PersonTable(db: gameDb.db);
+    skill = SkillTable(db: gameDb.db);
+    weapon = WeaponTable(db: gameDb.db);
+    translations = TranslationsTable(db: gameDb.db);
+    skillSeries = SkillSeriesTable(db: gameDb.db);
+  }
 }

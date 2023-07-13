@@ -17,6 +17,7 @@ class SkillPageState extends Equatable {
     this.categoryFilters = const {},
     this.input = const [],
     this.filtered = const [],
+    this.series,
   });
 
   // ignore: constant_identifier_names
@@ -57,6 +58,9 @@ class SkillPageState extends Equatable {
   /// 技能类别过滤器集合，目前用于对圣印进行分类
   final Set<int> categoryFilters;
 
+  /// 技能快速过滤，目前是单选
+  final String? series;
+
   ///用作给武器类别显示分类的字典
   static const List<WeaponTypeEnum> weaponTypeDict = [
     WeaponTypeEnum.Sword,
@@ -74,7 +78,7 @@ class SkillPageState extends Equatable {
   ];
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
         filters,
         moveTypeFilters,
         weaponTypeFilters,
@@ -82,6 +86,7 @@ class SkillPageState extends Equatable {
         exclusiveSkills,
         input,
         filtered,
+        series,
       ];
 
   // SkillPageState copyWith({
@@ -118,6 +123,7 @@ class SkillPageState extends Equatable {
     Set<MoveTypeEnum>? moveTypeFilters,
     Set<WeaponTypeEnum>? weaponTypeFilters,
     Set<int>? categoryFilters,
+    String? series,
   }) {
     return SkillPageState(
       input: input ?? this.input,
@@ -129,6 +135,8 @@ class SkillPageState extends Equatable {
       moveTypeFilters: moveTypeFilters ?? this.moveTypeFilters,
       weaponTypeFilters: weaponTypeFilters ?? this.weaponTypeFilters,
       categoryFilters: categoryFilters ?? this.categoryFilters,
+      series: series ?? this.series,
+      // series: series ?? this.series,
     );
   }
 

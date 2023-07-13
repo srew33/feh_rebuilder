@@ -11,6 +11,7 @@ class Skill extends JsonSkill implements BaseSkill {
   Set<String> rarity4;
   Set<String> rarity5;
   String? origSkill;
+  String? series;
 
   Skill({
     String? idTag,
@@ -86,6 +87,7 @@ class Skill extends JsonSkill implements BaseSkill {
     this.rarity4 = const {},
     this.rarity5 = const {},
     this.origSkill,
+    this.series = "",
     bool? arcaneWeapon,
   }) : super(
           idTag: idTag,
@@ -248,8 +250,8 @@ class Skill extends JsonSkill implements BaseSkill {
         distantCounter: json['distant_counter'] as bool?,
         cantoRange: json['canto_range'] as int?,
         pathfinderRange: json['pathfinder_range'] as int?,
-        isSkillAccessory: json['isSkillAccessory'] != null
-            ? json['isSkillAccessory'] as bool
+        isSkillAccessory: json['is_skill_accessory'] != null
+            ? json['is_skill_accessory'] as bool
             : false,
         rarity1: Set.from(json['rarity1'] as Iterable<dynamic>? ?? []),
         rarity2: Set.from(json['rarity2'] as Iterable<dynamic>? ?? []),
@@ -257,6 +259,7 @@ class Skill extends JsonSkill implements BaseSkill {
         rarity4: Set.from(json['rarity4'] as Iterable<dynamic>? ?? []),
         rarity5: Set.from(json['rarity5'] as Iterable<dynamic>? ?? []),
         origSkill: json['orig_skill'],
+        series: json['series'],
         arcaneWeapon: json['arcane_weapon'] as bool?,
       );
 
@@ -328,7 +331,7 @@ class Skill extends JsonSkill implements BaseSkill {
         'distant_counter': distantCounter,
         'canto_range': cantoRange,
         'pathfinder_range': pathfinderRange,
-        'isSkillAccessory': isSkillAccessory,
+        'is_skill_accessory': isSkillAccessory,
         'rarity1': rarity1.toList(),
         'rarity2': rarity2.toList(),
         'rarity3': rarity3.toList(),
@@ -336,6 +339,7 @@ class Skill extends JsonSkill implements BaseSkill {
         'rarity5': rarity5.toList(),
         'orig_skill': origSkill,
         "arcane_weapon": arcaneWeapon,
+        "series": series,
       };
   @override
   String toString() {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -307,22 +308,25 @@ class Utils {
   ///通过传入的skillTag搜索所有相关的专武1
   ///
   ///返回值：{专武Skill：专武效果Skill}
-  static Map<Skill, Skill?> getCanRefineWeapons(
-      String skillTag, Repository repo) {
+  static FutureOr<Map<Skill, Skill?>> getCanRefineWeapons(
+      String skillTag, Repository repo) async {
     Map<Skill, Skill?> result = {};
 
-    Skill exclusiveWeapon = repo.cacheSkills[skillTag]!;
+    Skill exclusiveWeapon = await repo.skill.mustRead(skillTag);
     // Skill.fromJson(await repo.get(repo.skill, skillTag) ?? {});
     // 加入自身
     result.addAll({exclusiveWeapon: null});
 
-    for (var s in repo.cacheSkills.values) {
+    var allSkill_ = await repo.skill.getAll();
+
+    for (var s in allSkill_.values) {
       if (s.origSkill == exclusiveWeapon.idTag) {
         if (s.refineId != null) {
-          result.addAll({s: repo.cacheSkills[s.refineId]});
+          result.addAll({s: await repo.skill.mustRead(s.refineId!)});
+          // result.addAll({s: repo.cacheSkills[s.refineId]});
         } else {
           // 如果武器未被锻造，一般指第二把专武
-          result.addAll(getCanRefineWeapons(s.idTag!, repo));
+          result.addAll(await getCanRefineWeapons(s.idTag!, repo));
         }
       }
     }

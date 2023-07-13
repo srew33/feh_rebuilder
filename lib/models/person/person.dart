@@ -14,6 +14,7 @@ class Person extends JsonPerson implements BasePerson {
   bool? resplendentHero;
   int bst;
   bool recentlyUpdate;
+  bool redeemable;
   Stats? defaultStats;
   Map<String, String> translatedNames;
 
@@ -48,6 +49,7 @@ class Person extends JsonPerson implements BasePerson {
     this.recentlyUpdate = false,
     this.defaultStats,
     this.translatedNames = const {},
+    this.redeemable = false,
   }) : super(
           idTag: idTag,
           roman: roman,
@@ -111,6 +113,7 @@ class Person extends JsonPerson implements BasePerson {
         type: json['type'] as int? ?? 0,
         resplendentHero: json["resplendent_hero"] as bool? ?? false,
         recentlyUpdate: json["recently_update"] as bool? ?? false,
+        redeemable: json["redeemable"] as bool? ?? false,
         bst: json['bst'] as int? ?? 0,
         defaultStats: json['default_stats'] != null
             ? Stats.fromJson(json['default_stats'] as Map<String, dynamic>)
@@ -150,6 +153,7 @@ class Person extends JsonPerson implements BasePerson {
         "max_rarity": maxRarity,
         "resplendent_hero": resplendentHero,
         "recently_update": recentlyUpdate,
+        "redeemable": redeemable,
         "bst": bst,
         "type": type,
         "default_stats": defaultStats?.toJson(),

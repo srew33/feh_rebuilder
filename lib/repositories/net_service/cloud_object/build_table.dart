@@ -26,7 +26,7 @@ class NetBuildPO extends LCObject implements BaseNetModel {
   NetBuildBusinessModel toBusinessModel() {
     return NetBuildBusinessModel(
       creator: creator,
-      build: PersonBuild.fromNet(this),
+      build: PersonBuild.fromList(build),
       idTag: idTag,
       likesId: likes.objectId!,
       count: (likes["count"] is double)

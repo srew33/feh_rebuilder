@@ -1,5 +1,6 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ignore_for_file: public_member_api_docs, sort_constructors_first, unused_import
 import 'package:feh_rebuilder/core/enum/person_type.dart';
+import 'package:feh_rebuilder/models/personBuild/person_build.dart';
 import 'package:feh_rebuilder/widgets/uni_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,9 +19,12 @@ import '../model.dart';
 
 class ResplendentTile extends StatelessWidget {
   /// 神装英雄
-  const ResplendentTile(this.initialState, {super.key});
+  const ResplendentTile(
+    this.family, {
+    super.key,
+  });
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   @override
   Widget build(BuildContext context) {
@@ -31,16 +35,17 @@ class ResplendentTile extends StatelessWidget {
           const Text("神装英雄"),
           Consumer(
             builder: (context, ref, child) {
-              bool resplendent = ref.watch(heroDetailPageProvider(initialState)
-                  .select((value) => value.resplendent));
-              bool isResplendentHero = ref.watch(
-                  heroDetailPageProvider(initialState)
-                      .select((value) => value.hero.resplendentHero ?? false));
+              var (h, r) =
+                  ref.watch(heroDetailPageProvider(family).select((value) => (
+                        value.valueOrNull!.hero,
+                        value.valueOrNull!.resplendent,
+                      )));
+
               return Switch(
-                value: resplendent,
-                onChanged: isResplendentHero
+                value: r,
+                onChanged: h.resplendentHero ?? false
                     ? (bool newVal) => ref
-                        .read(heroDetailPageProvider(initialState).notifier)
+                        .read(heroDetailPageProvider(family).notifier)
                         .changeProp(HerodetailPropChanged(resplendent: newVal))
                     : null,
               );
@@ -54,9 +59,9 @@ class ResplendentTile extends StatelessWidget {
 
 class AscendedAssetTile extends StatelessWidget {
   /// 绽放个性
-  const AscendedAssetTile(this.initialState, {super.key});
+  const AscendedAssetTile(this.family, {super.key});
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   @override
   Widget build(BuildContext context) {
@@ -67,11 +72,11 @@ class AscendedAssetTile extends StatelessWidget {
           const Text("绽放个性"),
           Consumer(
             builder: (context, ref, child) {
-              String? ascendedAsset = ref.watch(
-                  heroDetailPageProvider(initialState)
-                      .select((value) => value.ascendedAsset));
-              String? advantage = ref.watch(heroDetailPageProvider(initialState)
-                  .select((value) => value.advantage));
+              var (ascendedAsset, advantage) = ref.watch(
+                  heroDetailPageProvider(family).select((value) => (
+                        value.valueOrNull!.ascendedAsset,
+                        value.valueOrNull!.advantage
+                      )));
 
               return DropdownButton<String?>(
                   value: ascendedAsset?.toUpperCase(),
@@ -89,7 +94,7 @@ class AscendedAssetTile extends StatelessWidget {
                       ),
                   ],
                   onChanged: (obj) => ref
-                      .read(heroDetailPageProvider(initialState).notifier)
+                      .read(heroDetailPageProvider(family).notifier)
                       .changeProp(HerodetailPropChanged(
                         ascendedAsset: () => obj?.toLowerCase(),
                       )));
@@ -102,8 +107,10 @@ class AscendedAssetTile extends StatelessWidget {
 }
 
 class LevelSwitchTile extends StatelessWidget {
-  const LevelSwitchTile(this.initialState, {super.key});
-  final HerodetailState initialState;
+  const LevelSwitchTile(this.family, {super.key});
+
+  final PersonBuild family;
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -115,13 +122,18 @@ class LevelSwitchTile extends StatelessWidget {
             builder: (context, ref, child) {
               return TextButton(
                   onPressed: () {
-                    int current = ref
-                        .read(heroDetailPageProvider(initialState))
+                    var current = ref
+                        .read(heroDetailPageProvider(family))
+                        .asData
+                        ?.value
                         .targetLevel;
-                    ref
-                        .read(heroDetailPageProvider(initialState).notifier)
-                        .changeProp(HerodetailPropChanged(
-                            targetLevel: current == 40 ? 1 : 40));
+
+                    if (current != null) {
+                      ref
+                          .read(heroDetailPageProvider(family).notifier)
+                          .changeProp(HerodetailPropChanged(
+                              targetLevel: current == 40 ? 1 : 40));
+                    }
                   },
                   child: const Text("1/40"));
             },
@@ -134,8 +146,10 @@ class LevelSwitchTile extends StatelessWidget {
 }
 
 class SummonSupportTile extends StatelessWidget {
-  const SummonSupportTile(this.initialState, {super.key});
-  final HerodetailState initialState;
+  const SummonSupportTile(this.family, {super.key});
+
+  final PersonBuild family;
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -145,14 +159,13 @@ class SummonSupportTile extends StatelessWidget {
           const Text("召唤师的羁绊"),
           Consumer(
             builder: (context, ref, child) {
-              bool summonerSupport = ref.watch(
-                  heroDetailPageProvider(initialState)
-                      .select((value) => value.summonerSupport));
+              var summonerSupport = ref.watch(heroDetailPageProvider(family)
+                  .select((value) => value.valueOrNull!.summonerSupport));
 
               return Switch(
                 value: summonerSupport,
                 onChanged: (bool newVal) => ref
-                    .read(heroDetailPageProvider(initialState).notifier)
+                    .read(heroDetailPageProvider(family).notifier)
                     .changeProp(HerodetailPropChanged(summonerSupport: newVal)),
               );
             },
@@ -166,16 +179,16 @@ class SummonSupportTile extends StatelessWidget {
 class LegendaryTile extends ConsumerWidget {
   /// 显示特殊技能,与人物LEGEND字段有关
   const LegendaryTile(
-    this.initialState, {
+    this.family, {
     Key? key,
   }) : super(key: key);
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Person hero = ref.watch(
-        heroDetailPageProvider(initialState).select((value) => value.hero));
+    var hero = ref.watch(heroDetailPageProvider(family)
+        .select((value) => value.valueOrNull!.hero));
 
     return ((hero.legendary?.kind ?? 4) != 4 &&
             (hero.legendary?.kind ?? 4) != 5)
@@ -214,22 +227,30 @@ class LegendaryTile extends ConsumerWidget {
 
 class WeaponRefineTile extends ConsumerWidget {
   /// 显示武器炼成和效果
-  const WeaponRefineTile(this.initialState, {Key? key}) : super(key: key);
+  const WeaponRefineTile(this.family, {Key? key}) : super(key: key);
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    var state = ref.watch(heroDetailPageProvider(initialState));
+    var (hasRefinedWeapon, exclusiveList) =
+        ref.watch(heroDetailPageProvider(family).select((data) => (
+              data.valueOrNull?.hasRefinedWeapon,
+              data.valueOrNull?.exclusiveList,
+            )));
 
-    return state.hasRefinedWeapon
+    if (hasRefinedWeapon == null || exclusiveList == null) {
+      return const SizedBox.shrink();
+    }
+
+    return hasRefinedWeapon
         ? Column(
             children: [
               ListTile(
                 title: const Text("武器炼成"),
                 tileColor: Colors.grey.shade200,
               ),
-              for (MapEntry<Skill, Skill?> s in state.exclusiveList.entries)
+              for (MapEntry<Skill, Skill?> s in exclusiveList.entries)
                 if (s.key.category! == 0 && s.key.refineId != null)
                   ExpansionTile(title: Text(s.key.nameId!.tr), children: [
                     ListTile(
@@ -255,9 +276,9 @@ class WeaponRefineTile extends ConsumerWidget {
 
 class StatsTile extends ConsumerWidget {
   /// 显示属性数值
-  const StatsTile(this.initialState, {Key? key}) : super(key: key);
+  const StatsTile(this.family, {Key? key}) : super(key: key);
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   ///根据属性成长率设定文字颜色
   Color? getPropColor(GrowthRates rates, String statsName) {
@@ -273,8 +294,13 @@ class StatsTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    Person hero = ref.watch(
-        heroDetailPageProvider(initialState).select((value) => value.hero));
+    var (h, b, s, e) =
+        ref.watch(heroDetailPageProvider(family).select((value) => (
+              value.valueOrNull!.hero,
+              value.valueOrNull!.bst,
+              value.valueOrNull!.baseStats,
+              value.valueOrNull!.equipStats,
+            )));
 
     return ListTile(
       title: Column(
@@ -282,21 +308,14 @@ class StatsTile extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Consumer(
-                builder: (context, ref, child) {
-                  int bst = ref.watch(heroDetailPageProvider(initialState)
-                      .select((value) => value.bst));
-
-                  return Text.rich(TextSpan(children: [
-                    const TextSpan(
-                        text: "竞技场", style: TextStyle(color: Colors.black)),
-                    TextSpan(
-                        text: bst.toString(),
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, color: Colors.black)),
-                  ]));
-                },
-              ),
+              Text.rich(TextSpan(children: [
+                const TextSpan(
+                    text: "竞技场", style: TextStyle(color: Colors.black)),
+                TextSpan(
+                    text: b.toString(),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.black)),
+              ])),
               FittedBox(
                 child: Row(
                   children: [
@@ -307,7 +326,7 @@ class StatsTile extends ConsumerWidget {
                             child: Text(
                           "CUSTOM_STATS_${key.name}".tr,
                           style: TextStyle(
-                              color: getPropColor(hero.growthRates!, key.name)),
+                              color: getPropColor(h.growthRates!, key.name)),
                         )),
                       ),
                   ],
@@ -319,26 +338,18 @@ class StatsTile extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text("基础数值"),
-              Consumer(
-                builder: (context, ref, child) {
-                  Stats baseStats = ref.watch(
-                      heroDetailPageProvider(initialState)
-                          .select((value) => value.baseStats));
-
-                  return FittedBox(
-                    child: Row(
-                      children: [
-                        for (int num in baseStats.toJson().values)
-                          SizedBox(
-                            width: 40,
-                            child: Center(
-                              child: Text(num.toString()),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
+              FittedBox(
+                child: Row(
+                  children: [
+                    for (int num in s.toJson().values)
+                      SizedBox(
+                        width: 40,
+                        child: Center(
+                          child: Text(num.toString()),
+                        ),
+                      ),
+                  ],
+                ),
               )
             ],
           ),
@@ -346,26 +357,18 @@ class StatsTile extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text("装备数值"),
-              Consumer(
-                builder: (context, ref, child) {
-                  Stats equipStats = ref.watch(
-                      heroDetailPageProvider(initialState)
-                          .select((value) => value.equipStats));
-
-                  return FittedBox(
-                    child: Row(
-                      children: [
-                        for (int num in equipStats.toJson().values)
-                          SizedBox(
-                            width: 40,
-                            child: Center(
-                              child: Text(num.toString()),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
+              FittedBox(
+                child: Row(
+                  children: [
+                    for (int num in e.toJson().values)
+                      SizedBox(
+                        width: 40,
+                        child: Center(
+                          child: Text(num.toString()),
+                        ),
+                      ),
+                  ],
+                ),
               )
             ],
           ),
@@ -378,11 +381,11 @@ class StatsTile extends ConsumerWidget {
 class RarityTile extends StatelessWidget {
   /// 稀有度
   const RarityTile(
-    this.initialState, {
+    this.family, {
     Key? key,
   }) : super(key: key);
 
-  final HerodetailState initialState;
+  final PersonBuild family;
 
   @override
   Widget build(BuildContext context) {
@@ -394,19 +397,19 @@ class RarityTile extends StatelessWidget {
           const Text("稀有度"),
           Consumer(
             builder: (context, ref, child) {
-              int rarity = ref.watch(heroDetailPageProvider(initialState)
-                  .select((value) => value.rarity));
+              var r = ref.watch(heroDetailPageProvider(family)
+                  .select((value) => value.valueOrNull!.rarity));
 
               return Expanded(
                 child: Slider(
-                  value: rarity.toDouble(),
+                  value: r.toDouble(),
                   min: 1,
                   max: 5,
                   divisions: 4,
-                  label: rarity.toString(),
+                  label: r.toString(),
                   onChanged: (double value) {},
                   onChangeEnd: (double value) => ref
-                      .read(heroDetailPageProvider(initialState).notifier)
+                      .read(heroDetailPageProvider(family).notifier)
                       .changeProp(
                         HerodetailPropChanged(rarity: value.round()),
                       ),
@@ -416,8 +419,8 @@ class RarityTile extends StatelessWidget {
           ),
           Consumer(
             builder: (context, ref, child) {
-              Person hero = ref.watch(heroDetailPageProvider(initialState)
-                  .select((value) => value.hero));
+              var hero = ref.watch(heroDetailPageProvider(family)
+                  .select((value) => value.valueOrNull!.hero));
 
               return hero.minRarity == 0
                   ? hero.maxRarity == 0

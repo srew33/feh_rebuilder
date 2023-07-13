@@ -44,11 +44,26 @@ class GameDb extends DataProvider {
     return this;
   }
 
+  Future<void> initialDb(Map<String, dynamic> data) async {
+    await db.close();
+    Utils.debug("关闭完成");
+
+    db = await importDatabase(data, dbFactory, dbPath);
+
+    Utils.debug("升级完成");
+  }
+
   Future<void> updateDb(Map<String, dynamic> data) async {
     await db.close();
     Utils.debug("关闭完成");
     //  需要先关闭才能使用，否则不会报错也无法继续
     // ! 更新后有一些操作可能会因为db实例发生变化导致报错
+
+    if (EnvProvider.appVersionCode < (data["minimal_support_version"] ?? 999)) {
+      throw UnsupportedError(
+          "程序版本(${EnvProvider.appVersionCode})和更新包(${data["minimal_support_version"]})不匹配");
+    }
+
     db = await importDatabase(data, dbFactory, dbPath);
 
     Utils.debug("升级完成");

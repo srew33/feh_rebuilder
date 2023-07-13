@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:feh_rebuilder/core/enum/page_state.dart';
 import 'package:feh_rebuilder/models/person/person.dart';
 import 'package:feh_rebuilder/models/person/stats.dart';
 import 'package:feh_rebuilder/models/personBuild/person_build.dart';
@@ -11,7 +10,6 @@ import 'dart:math' as m;
 enum HerodetailAction { save, share, upload, webBuild }
 
 class HerodetailState extends Equatable {
-  final PageStatus status;
   final String? favKey;
   final Person hero;
   final String? advantage;
@@ -120,16 +118,7 @@ class HerodetailState extends Equatable {
   int get allSpCost => equipSkills.sublist(0, 8).fold<int>(
       0, (previousValue, element) => previousValue + (element?.spCost ?? 0));
 
-  // ignore: non_constant_identifier_names
-  static HerodetailState DEFAULT = HerodetailState(
-    status: PageStatus.initial,
-    hero: Person(),
-    hasRefinedWeapon: false,
-    refinedWeaponStats: Stats(),
-  );
-
   const HerodetailState({
-    required this.status,
     this.favKey,
     required this.hero,
     this.advantage,
@@ -149,7 +138,6 @@ class HerodetailState extends Equatable {
 
   @override
   List<Object> get props => [
-        status,
         hero.idTag ?? "",
         advantage ?? "",
         disAdvantage ?? "",
@@ -167,7 +155,6 @@ class HerodetailState extends Equatable {
       ];
 
   HerodetailState copyWith({
-    PageStatus? status,
     Person? hero,
     String? Function()? advantage,
     String? Function()? disAdvantage,
@@ -183,7 +170,6 @@ class HerodetailState extends Equatable {
     Stats? refinedWeaponStats,
   }) {
     return HerodetailState(
-      status: status ?? this.status,
       hero: hero ?? this.hero,
       favKey: favKey,
       advantage: advantage == null ? this.advantage : advantage.call(),
@@ -216,75 +202,6 @@ class HerodetailState extends Equatable {
       resplendent: resplendent,
       summonerSupport: summonerSupport,
       equipSkills: equipSkills.map((e) => e?.idTag!).toList(),
-    );
-  }
-
-  static Future<HerodetailState> initial(
-      PersonBuild initialBuild, Repository repo) async {
-    List<Skill?> equipSkills;
-
-    Stats refinedWeaponStats = Stats();
-
-    Person hero = repo.cachePersons[initialBuild.personTag]!;
-
-    equipSkills = repo.getPersonInitialSkills(hero);
-
-    if (initialBuild.equipSkills.isEmpty) {
-      // 技能为空时，一般代表默认技能配置
-    } else {
-      // 不为空，一般代表自定义的技能配置
-      var eqs = repo.getSkillsByTags(initialBuild.equipSkills);
-      // 合并两个技能列表，主要为了获取第9位的专武
-      for (var i = 0; i < eqs.length; i++) {
-        equipSkills[i] = eqs[i];
-      }
-    }
-    // 如果默认武器位refineId不为空就添加对应的stats，应该仅限从收藏页进入的部分情况才会出现
-    if (equipSkills[0]?.refineId != null) {
-      refinedWeaponStats
-          .add(repo.cacheSkills[equipSkills[0]!.refineId!]?.stats!);
-    }
-
-    Map<Skill, Skill?> exclusiveList = {};
-
-    bool hasRefinedWeapon = false;
-
-    // 9是equipSkills的元素数量
-    for (var i = 0; i < 9; i++) {
-      if (i == 0 || i == 8) {
-        if (equipSkills[i]?.exclusive! ?? false) {
-          Map<Skill, Skill?> refinedWeapon =
-              Utils.getCanRefineWeapons(equipSkills[i]!.idTag!, repo);
-          exclusiveList.addAll(refinedWeapon);
-          // 如果有存在锻造效果，则代表该人物有锻造武器，将显示武器炼成的内容
-          hasRefinedWeapon =
-              refinedWeapon.values.any((element) => element != null);
-        }
-      } else {
-        if ((equipSkills[i]?.exclusive! ?? false)) {
-          exclusiveList.addAll({equipSkills[i]!: null});
-        }
-      }
-    }
-
-    return HerodetailState(
-      status: PageStatus.normal,
-      hero: hero,
-      equipSkills: equipSkills,
-      advantage: initialBuild.advantage,
-      disAdvantage: initialBuild.disAdvantage,
-      rarity: initialBuild.rarity,
-      merged: initialBuild.merged,
-      dragonflowers: initialBuild.dragonflowers,
-      resplendent: initialBuild.resplendent,
-      summonerSupport: initialBuild.summonerSupport,
-      exclusiveList: exclusiveList,
-      refinedWeaponStats: refinedWeaponStats,
-      hasRefinedWeapon: hasRefinedWeapon,
-      ascendedAsset: initialBuild.ascendedAsset,
-      // baseStats: baseStats,
-      // skillsStats: skillsStats,
-      // exclusiveList: initBuild.,
     );
   }
 }

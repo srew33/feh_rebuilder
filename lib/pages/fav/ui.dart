@@ -1,5 +1,4 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'package:feh_rebuilder/pages/fav/body/first/ui.dart';
 import 'package:feh_rebuilder/pages/fav/body/second/controller.dart';
 import 'package:feh_rebuilder/pages/fav/body/second/ui.dart';
 import 'package:flutter/material.dart';
@@ -10,6 +9,7 @@ import 'package:feh_rebuilder/main.dart';
 import 'package:feh_rebuilder/widgets/filter_drawer/filter_drawer.dart';
 
 import 'body/first/controller.dart';
+import 'body/first/ui.dart';
 
 late final TabController favPageTabController;
 
@@ -81,7 +81,7 @@ class _FavPageState extends ConsumerState<FavPage>
   }
 }
 
-class _AppBar extends StatefulWidget with PreferredSizeWidget {
+class _AppBar extends StatefulWidget implements PreferredSizeWidget {
   const _AppBar({
     Key? key,
     required this.controller,

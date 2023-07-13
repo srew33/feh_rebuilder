@@ -28,10 +28,10 @@ class _PickerState extends State<Picker> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 200,
-      color: Colors.white,
-      child: Column(
+    return BottomSheet(
+      onClosing: () {},
+      constraints: const BoxConstraints(maxHeight: 200),
+      builder: (context) => Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -80,6 +80,59 @@ class _PickerState extends State<Picker> {
           )
         ],
       ),
+      // builder: (context) => Container(
+      //   height: 200,
+      //   color: Colors.white,
+      //   child: Column(
+      //     children: [
+      //       Row(
+      //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //         children: [
+      //           TextButton(
+      //               onPressed: () {
+      //                 Navigator.of(context).pop();
+      //               },
+      //               child: const Text("取消")),
+      //           widget.title ?? const SizedBox.shrink(),
+      //           TextButton(
+      //               onPressed: () {
+      //                 if (widget.nullIndex != null) {
+      //                   // 全不为null(且全不相等)或全为null
+      //                   if ((!current.any(
+      //                               (element) => element == widget.nullIndex) &&
+      //                           current.length == current.toSet().length) ||
+      //                       !current.any(
+      //                           (element) => element != widget.nullIndex)) {
+      //                     Navigator.of(context).pop(current);
+      //                   }
+      //                 } else {
+      //                   Navigator.of(context).pop(current);
+      //                 }
+      //               },
+      //               child: const Text(
+      //                 "确认",
+      //               )),
+      //         ],
+      //       ),
+      //       Row(
+      //         children: [
+      //           for (int i = 0; i < widget.body.length; i++)
+      //             Expanded(
+      //                 child: NumberPicker(
+      //                     minValue: widget.body[i]["minValue"],
+      //                     maxValue: widget.body[i]["maxValue"],
+      //                     value: current[i],
+      //                     textMapper: widget.body[i]["textMapper"],
+      //                     onChanged: (newValue) {
+      //                       setState(() {
+      //                         current[i] = newValue;
+      //                       });
+      //                     }))
+      //         ],
+      //       )
+      //     ],
+      //   ),
+      // ),
     );
   }
 }

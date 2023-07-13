@@ -23,7 +23,7 @@ class NetBuildNotifier
   FutureOr<BuildshareState> build(String arg) async {
     var repo = ref.read(repoProvider).requireValue;
     // 可能要处理null情况
-    _person = repo.cachePersons[arg]!;
+    _person = await repo.person.mustRead(arg);
 
     var netService = ref.read(netProvider);
 
@@ -31,8 +31,12 @@ class NetBuildNotifier
 
     List<NetBuildBusinessModel> r =
         await netService.getWebBuilds(_person.idTag!);
+    List<BuildShareVM> models = [];
 
-    List<BuildShareVM> models = r.map((e) => webModel2View(e)).toList();
+    for (var i = 0; i < r.length; i++) {
+      models.add(await webModel2View(r[i]));
+    }
+    // List<BuildShareVM> models = r.map((e) => webModel2View(e)).toList();
 
     return BuildshareState(
       hero: _person,
@@ -49,13 +53,14 @@ class NetBuildNotifier
     state = AsyncValue.data(state.requireValue.copyWith(buildList: list));
   }
 
-  BuildShareVM webModel2View(NetBuildBusinessModel netBuild) {
+  FutureOr<BuildShareVM> webModel2View(NetBuildBusinessModel netBuild) async {
     var repo = ref.read(repoProvider).requireValue;
 
     PersonBuild personBuild = netBuild.build;
-    List<Skill?> skills = netBuild.build.equipSkills
-        .map((e) => e == null ? null : repo.cacheSkills[e])
-        .toList();
+    List<Skill?> skills = await repo.skill.readSome(netBuild.build.equipSkills);
+    // List<Skill?> skills = netBuild.build.equipSkills
+    //     .map((e) => e == null ? null : repo.cacheSkills[e])
+    //     .toList();
     Stats skillsStats = Stats(hp: 0, atk: 0, spd: 0, def: 0, res: 0);
     for (var skill in skills) {
       if (skill != null) {
@@ -64,7 +69,7 @@ class NetBuildNotifier
         skillsStats.atk += skill.might!;
         // 对武器炼成后的技能需要考虑添加额外技能的属性，除武器外其他类型的技能暂不考虑
         if (skill.refineId != null) {
-          Skill refine = repo.cacheSkills[skill.refineId!]!;
+          Skill refine = await repo.skill.mustRead(skill.refineId!);
           skillsStats.add(refine.stats);
         }
       }
@@ -89,7 +94,7 @@ class NetBuildNotifier
       stats: stats,
       skills: skills,
       person: _person,
-      arenaScore: repo.getArenaScoreByBuild(personBuild),
+      arenaScore: await repo.getArenaScoreByBuild(personBuild),
       netBuild: netBuild,
     );
   }

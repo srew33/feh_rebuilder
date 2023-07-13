@@ -84,12 +84,13 @@ android {
         release {
             // ! 正式版要修改
             // applicationIdSuffix ".beta"
+            println "Signing in release mode"
             if (keystorePropertiesFile.exists()) {
                 signingConfig signingConfigs.release
                 println "Signing with key.properties"
             } else {
                 signingConfig signingConfigs.debug
-                println "Signing with debug keys"
+                println "key.properties not exist, Signing with debug keys"
             }
         }
     }

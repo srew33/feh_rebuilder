@@ -60,6 +60,8 @@ extension PersonTypeEnumFunc on PersonTypeEnum {
   }
 }
 
+// PersonTypeEnum 与 PersonFilterEnum 的区别是 PersonTypeEnum 枚举人物自带字段
+// PersonFilterEnum 枚举人物类别，相互比较独立
 enum PersonFilterEnum {
   moveType,
   weaponType,
@@ -67,6 +69,8 @@ enum PersonFilterEnum {
   recentlyUpdated,
   gameVersion,
   personType,
+  // 可被圣杯兑换的英雄
+  redeemable
 }
 
 class PersonFilter implements Filter<BasePerson?, PersonFilterEnum, Person> {
@@ -148,6 +152,8 @@ class PersonFilter implements Filter<BasePerson?, PersonFilterEnum, Person> {
       //   return basePerson.legendary?.kind == 5;
       case PersonFilterEnum.recentlyUpdated:
         return basePerson.recentlyUpdate;
+      case PersonFilterEnum.redeemable:
+        return basePerson.redeemable;
       case PersonFilterEnum.gameVersion:
         Set<int> valid1 =
             (valid as Set<GameVersionEnum>).map((e) => e.index + 1).toSet();

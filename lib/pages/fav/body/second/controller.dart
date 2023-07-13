@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:feh_rebuilder/core/enum/game_version.dart';
 import 'package:feh_rebuilder/core/enum/move_type.dart';
 import 'package:feh_rebuilder/core/enum/series.dart';
@@ -11,55 +13,73 @@ import '../first/model.dart';
 import 'model.dart';
 
 final favSecondProvider =
-    NotifierProvider<FavSecondNotifier, FavSecondState>(FavSecondNotifier.new);
+    AsyncNotifierProvider<FavSecondNotifier, FavSecondState>(
+        FavSecondNotifier.new);
 
-class FavSecondNotifier extends Notifier<FavSecondState> {
+class FavSecondNotifier extends AsyncNotifier<FavSecondState> {
   @override
-  FavSecondState build() {
-    var allFav = _refreshAll();
+  Future<FavSecondState> build() async {
+    var allFav = await _refreshAll();
 
     return FavSecondState(all: allFav, filtered: [...allFav]);
   }
 
-  List<FavSecondItemModel> _refreshAll() {
+  Future<List<FavSecondItemModel>> _refreshAll() async {
     var repo = ref.read(repoProvider).requireValue;
 
     List<FavSecondItemModel> allFav = [];
-    for (var team in repo.cacheArenateam.entries) {
-      var a = team.value.map((e2) {
-        if (e2 == null || !repo.cacheFavHero.containsKey(e2)) {
+
+    var allTeam = await repo.arenaTeam.getAll();
+
+    var allFav_ = await repo.favourites.getAll();
+
+    for (var team in allTeam.entries) {
+      Iterable<PersonBuildVM?> a = await Future.wait(team.value.map((e2) async {
+        if (e2 == null || !allFav_.containsKey(e2)) {
           return null;
         }
-        return PersonBuildVM.fromBuild(repo.cacheFavHero[e2]!, repo);
-      });
+        return PersonBuildVM.fromBuild(allFav_[e2]!, repo);
+      }));
+
       if (a.any((element) => element != null)) {
         allFav.add(FavSecondItemModel(team.key, a.toList()));
       }
     }
+
     return allFav;
   }
 
-  void refresh() {
-    var allFav = _refreshAll();
+  Future<void> refresh() async {
+    state = await AsyncValue.guard(() async {
+      var s = state.requireValue;
 
-    state = state.copyWith(all: allFav, filtered: [...allFav]);
+      var allFav = await _refreshAll();
+
+      return s.copyWith(all: allFav, filtered: [...allFav]);
+    });
   }
 
-  void updateBuild(PersonBuildVM newBuild) {
-    bool shouldUpdate = false;
-    var all = [...state.all];
-    for (var i = 0; i < all.length; i++) {
-      for (var j = 0; j < all[i].data.length; j++) {
-        if (all[i].data[j]?.build.key == newBuild.build.key) {
-          all[i].data[j] = newBuild;
-          shouldUpdate = true;
+  Future<void> updateBuild(PersonBuildVM newBuild) async {
+    state = await AsyncValue.guard(() async {
+      var s = state.requireValue;
+
+      bool shouldUpdate = false;
+      var all = [...s.all];
+      for (var i = 0; i < all.length; i++) {
+        for (var j = 0; j < all[i].data.length; j++) {
+          if (all[i].data[j]?.build.key == newBuild.build.key) {
+            all[i].data[j] = newBuild;
+            shouldUpdate = true;
+          }
         }
       }
-    }
 
-    if (shouldUpdate) {
-      state = state.copyWith(all: all, filtered: [...all]);
-    }
+      if (shouldUpdate) {
+        return s.copyWith(all: all, filtered: [...all]);
+      } else {
+        return s;
+      }
+    });
   }
 
   Future<void> save(List<String?> team, [String? key]) async {
@@ -68,10 +88,9 @@ class FavSecondNotifier extends Notifier<FavSecondState> {
     } else {
       try {
         var repo = ref.read(repoProvider).requireValue;
-        var k = await repo.save2Team(team: team, key: key);
+        await repo.save2Team(team: team, key: key);
 
-        repo.cacheArenateam[k] = team;
-        // todo 有必要把cache改造为future
+        // repo.cacheArenateam[k] = team;
         // 刷新列表,为了确保数据正确，这里还是直接从数据库读取
         refresh();
         Utils.showToast("保存成功");
@@ -82,45 +101,53 @@ class FavSecondNotifier extends Notifier<FavSecondState> {
   }
 
   Future<void> delete(int index) async {
-    var n = [...state.filtered];
-    await ref.read(repoProvider).requireValue.arenaTeam.delete(n[index].key);
+    state = await AsyncValue.guard(() async {
+      var s = state.requireValue;
 
-    n.removeAt(index);
+      var n = [...s.filtered];
+      await ref.read(repoProvider).requireValue.arenaTeam.delete(n[index].key);
 
-    state = state.copyWith(filtered: n);
+      n.removeAt(index);
+
+      return s.copyWith(filtered: n);
+    });
   }
 
   Future<void> deleteSome(Set<int> selected) async {
-    // 从大到小排列并删除对应元素
-    var s1 = selected.toList();
-    s1.sort((a, b) => b.compareTo(a));
+    state = await AsyncValue.guard(() async {
+      var s = state.requireValue;
 
-    List<FavSecondItemModel> n = [...state.filtered];
-    List<String> keys = [];
-    for (var i in s1) {
-      keys.add(n[i].key);
-      n.removeAt(i);
-    }
+      // 从大到小排列并删除对应元素
+      var s1 = selected.toList();
+      s1.sort((a, b) => b.compareTo(a));
 
-    if (keys.isEmpty) {
-      return;
-    }
-    var repo = ref.read(repoProvider).requireValue;
-    await repo.arenaTeam.deleteSome(keys);
-    // 删除缓存
-    for (var key in keys) {
-      repo.cacheArenateam.remove(key);
-    }
+      List<FavSecondItemModel> n = [...s.filtered];
+      List<String> keys = [];
+      for (var i in s1) {
+        keys.add(n[i].key);
+        n.removeAt(i);
+      }
 
-    state = state.copyWith(filtered: n);
+      if (keys.isEmpty) {
+        return s;
+      }
+      var repo = ref.read(repoProvider).requireValue;
+      await repo.arenaTeam.deleteSome(keys);
+
+      return s.copyWith(filtered: n);
+    });
   }
 
-  void confirmFilter(Set filters) {
-    List<FavSecondItemModel> filtered = _filt(state.all, filters);
+  Future<void> confirmFilter(Set filters) async {
+    state = await AsyncValue.guard(() async {
+      var s = state.requireValue;
 
-    state = state.copyWith(
-      filtered: filtered,
-    );
+      List<FavSecondItemModel> filtered = _filt(s.all, filters);
+
+      return s.copyWith(
+        filtered: filtered,
+      );
+    });
   }
 }
 
